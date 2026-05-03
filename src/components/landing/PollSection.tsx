@@ -69,21 +69,6 @@ export function PollSection({
   const sectionRef = useTrackSectionView("polls");
   const gateFiredRef = useRef(false);
 
-<<<<<<< Updated upstream
-=======
-  useEffect(() => {
-    const check = () => setIsLight(document.documentElement.classList.contains("theme-light"));
-    check();
-    const obs = new MutationObserver(check);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    return () => obs.disconnect();
-  }, []);
-
-  const currentPoll = polls[currentIndex] ?? null;
-  const currentHasVoted = currentPoll ? votedPolls.has(currentPoll.id) : false;
-  const showSignupGate = !isLoggedIn && freeVotesUsed >= 3;
-
->>>>>>> Stashed changes
   const advance = useCallback(
     (nextIndex: number) => {
       setCurrentIndex(Math.max(0, Math.min(polls.length - 1, nextIndex)));
@@ -92,20 +77,8 @@ export function PollSection({
   );
 
   const handleVote = useCallback(
-<<<<<<< Updated upstream
     (poll: Poll, optionId: string) => {
       if (advancing) return;
-=======
-    (answer: "yes" | "no") => {
-      if (!currentPoll) return;
-
-      const yesOption = currentPoll.options.find((o) => o.text === "Yes");
-      const noOption = currentPoll.options.find((o) => o.text === "No");
-      const optionId = answer === "yes" ? yesOption?.id : noOption?.id;
-      if (!optionId) return;
-
-      setLocalVotedIds((prev) => ({ ...prev, [currentPoll.id]: optionId }));
->>>>>>> Stashed changes
 
       const answer = poll.options.find((option) => option.id === optionId)?.text.toLowerCase() ?? "unknown";
       const nextVotesUsed = !isLoggedIn ? freeVotesUsed + 1 : freeVotesUsed;
