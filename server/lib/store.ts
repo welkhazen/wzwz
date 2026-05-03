@@ -1,34 +1,15 @@
 import type { AuthSessionData, BootstrapResponse, Poll, User, UserRecord } from "../types";
+import { POLL_QUESTION_SEEDS } from "../../src/features/polls/pollQuestions";
 
-const polls: Poll[] = [
-  {
-    id: "poll-1",
-    question: "Do you believe your thoughts shape your reality?",
-    options: [
-      { id: "p1-yes", text: "Yes", votes: 482 },
-      { id: "p1-no", text: "No", votes: 187 },
-    ],
-    locked: false,
-  },
-  {
-    id: "poll-2",
-    question: "Do you think social media does more harm than good?",
-    options: [
-      { id: "p2-yes", text: "Yes", votes: 391 },
-      { id: "p2-no", text: "No", votes: 274 },
-    ],
-    locked: false,
-  },
-  {
-    id: "poll-3",
-    question: "Would you sacrifice comfort for personal growth?",
-    options: [
-      { id: "p3-yes", text: "Yes", votes: 523 },
-      { id: "p3-no", text: "No", votes: 146 },
-    ],
-    locked: false,
-  },
-];
+const polls: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
+  id: poll.id,
+  question: poll.question,
+  options: [
+    { id: `p${index + 1}-yes`, text: "Yes", votes: poll.yesVotes },
+    { id: `p${index + 1}-no`, text: "No", votes: poll.noVotes },
+  ],
+  locked: false,
+}));
 
 const usersById = new Map<string, UserRecord>();
 const userIdByUsername = new Map<string, string>();

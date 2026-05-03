@@ -4,6 +4,36 @@ export class ApiError extends Error {
   }
 }
 
+async function getSeedPollsResponse(): Promise<unknown> {
+  const { POLL_QUESTION_SEEDS } = await import("@/features/polls/pollQuestions");
+  return {
+    polls: POLL_QUESTION_SEEDS.map((poll, index) => ({
+      id: poll.id,
+      question: poll.question,
+      options: [
+        { id: `p${index + 1}-yes`, text: "Yes", votes: poll.yesVotes },
+        { id: `p${index + 1}-no`, text: "No", votes: poll.noVotes },
+      ],
+      locked: false,
+    })),
+    votedPolls: [],
+  };
+}
+
+function shouldUseSeedPolls(polls: unknown[]): boolean {
+  return (
+    polls.length < 3 ||
+    polls.some((poll) => {
+      if (!poll || typeof poll !== "object" || !("question" in poll)) {
+        return true;
+      }
+
+      const question = String((poll as { question: unknown }).question).trim().toLowerCase();
+      return question === "supabase";
+    })
+  );
+}
+
 async function getPollsMockResponse(): Promise<unknown> {
   try {
     const { supabase } = await import('@/backend/supabase/client');
@@ -39,7 +69,9 @@ async function getPollsMockResponse(): Promise<unknown> {
             p.options.length >= 2 &&
             !p.locked
         );
-      if (polls.length > 0) return { polls, votedPolls: [] };
+      if (polls.length > 0 && !shouldUseSeedPolls(polls)) {
+        return { polls, votedPolls: [] };
+      }
     }
   } catch {
     // fall through to localStorage
@@ -47,9 +79,12 @@ async function getPollsMockResponse(): Promise<unknown> {
   try {
     const raw = localStorage.getItem("raw.admin.polls.v1");
     const polls = raw ? (JSON.parse(raw) as unknown[]) : [];
-    return { polls, votedPolls: [] };
+    if (polls.length > 0 && !shouldUseSeedPolls(polls)) {
+      return { polls, votedPolls: [] };
+    }
+    return getSeedPollsResponse();
   } catch {
-    return { polls: [], votedPolls: [] };
+    return getSeedPollsResponse();
   }
 }
 
@@ -68,6 +103,9 @@ async function getMockResponse(input: string): Promise<unknown> {
       },
     };
   }
+  if ((input.includes("/api/polls") || input.includes("/api/v2/polls")) && input.includes("/vote")) {
+    return { ok: true };
+  }
   if (input.includes("/api/polls") || input.includes("/api/v2/polls")) {
     return getPollsMockResponse();
   }
@@ -81,18 +119,23 @@ async function getMockResponse(input: string): Promise<unknown> {
 }
 
 export async function apiRequest<T>(input: string, init?: RequestInit): Promise<T> {
-  if (typeof window !== "undefined") {
-    return getMockResponse(input) as Promise<T>;
-  }
+  let response: Response;
 
-  const response = await fetch(input, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    ...init,
-  });
+  try {
+    response = await fetch(input, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+      ...init,
+    });
+  } catch (error) {
+    if (typeof window !== "undefined") {
+      return getMockResponse(input) as Promise<T>;
+    }
+    throw error;
+  }
 
   let payload: unknown = null;
   try {

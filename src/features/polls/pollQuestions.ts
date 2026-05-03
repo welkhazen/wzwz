@@ -10,20 +10,20 @@ export interface PollQuestionSeed {
 export const POLL_QUESTION_SEEDS: PollQuestionSeed[] = [
   {
     id: "poll-1",
-    question: "Do you believe your thoughts shape your reality?",
-    yesVotes: 482,
-    noVotes: 187,
+    question: "Do you feel more yourself when no one is judging?",
+    yesVotes: 514,
+    noVotes: 121,
   },
   {
     id: "poll-2",
-    question: "Do you think social media does more harm than good?",
-    yesVotes: 391,
-    noVotes: 274,
+    question: "Would you join a community built around shared values?",
+    yesVotes: 468,
+    noVotes: 153,
   },
   {
     id: "poll-3",
-    question: "Would you sacrifice comfort for personal growth?",
-    yesVotes: 523,
-    noVotes: 146,
+    question: "Should instructors grow with their communities?",
+    yesVotes: 437,
+    noVotes: 166,
   },
 ];
