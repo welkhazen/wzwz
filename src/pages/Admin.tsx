@@ -100,6 +100,26 @@ export default function Admin() {
   );
   const bannedUsers = useMemo(() => users.filter((entry) => entry.moderationStatus === "banned"), [users]);
 
+<<<<<<< Updated upstream
+=======
+  useEffect(() => {
+    if (!autoColsFromNames) return;
+    if (parsedNames.length === 0 || sliceRows < 1) return;
+    const computedCols = Math.max(1, Math.ceil(parsedNames.length / sliceRows));
+    setSliceCols((current) => (current === computedCols ? current : computedCols));
+  }, [autoColsFromNames, parsedNames.length, sliceRows]);
+
+  useEffect(() => {
+    if (!autoMeasureGap || !sheetFile) return;
+    const timer = window.setTimeout(() => {
+      void autoMeasureGapForFile(sheetFile, sliceRows, sliceCols);
+    }, 250);
+    return () => window.clearTimeout(timer);
+    // autoMeasureGapForFile is a local helper that already reads trimThreshold.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoMeasureGap, sheetFile, sliceRows, sliceCols, trimThreshold]);
+
+>>>>>>> Stashed changes
   if (!sessionLoaded) {
     return null;
   }
