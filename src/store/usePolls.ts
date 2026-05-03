@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ApiError, apiRequest } from "@/lib/api/client";
+import { apiRequest } from "@/lib/api/client";
 import { track } from "@/lib/analytics";
 import type { Poll } from "@/store/types";
 import { getTodayKey } from "@/store/useRawStore.storage";
@@ -31,14 +31,14 @@ export function usePolls(isLoggedIn: boolean) {
     enabled: true,
     retry: false,
     queryFn: async (): Promise<Poll[]> => {
-      const response = await apiRequest<{ polls: Poll[] }>("/api/v2/polls/random?limit=10");
+      const response = await apiRequest<{ polls: Poll[] }>("/api/polls/random?limit=10");
       return response.polls;
     },
   });
 
   const voteMutation = useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
-      await apiRequest<{ ok: boolean }>(`/api/v2/polls/${pollId}/vote`, {
+      await apiRequest<{ ok: boolean }>(`/api/polls/${pollId}/vote`, {
         method: "POST",
         body: JSON.stringify({ optionId }),
       });

@@ -1,4 +1,4 @@
-import type { Request } from "express";
+import type { Request, Response } from "express";
 import { Router } from "express";
 import { z } from "zod";
 import { audit } from "../lib/audit";
@@ -8,6 +8,10 @@ import type { AuthSessionData } from "../types";
 
 const voteBodySchema = z.object({
   optionId: z.string().min(1).max(64),
+});
+
+const randomPollsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(10),
 });
 
 function getSessionData(req: Request): AuthSessionData {
@@ -28,7 +32,30 @@ pollsRouter.get("/bootstrap", async (req, res) => {
   return res.status(200).json(buildBootstrap(user, sessionData));
 });
 
-pollsRouter.post("/polls/:pollId/vote", async (req, res) => {
+async function handleRandomPolls(req: Request, res: Response) {
+  const parsed = randomPollsQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid poll query." });
+  }
+
+  const sessionData = getSessionData(req);
+  const user = sessionData.userId ? await userRepository.findById(sessionData.userId) : null;
+  const bootstrap = buildBootstrap(user, sessionData);
+  const polls = bootstrap.polls
+    .filter((poll) => !poll.locked)
+    .map((poll) => ({ poll, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .slice(0, parsed.data.limit)
+    .map(({ poll }) => poll);
+
+  return res.status(200).json({
+    polls,
+    votedPolls: bootstrap.votedPollIds,
+    freeVotesUsed: bootstrap.freeVotesUsed,
+  });
+}
+
+async function handleVote(req: Request, res: Response) {
   const parsed = voteBodySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid vote payload." });
@@ -60,4 +87,9 @@ pollsRouter.post("/polls/:pollId/vote", async (req, res) => {
   });
 
   return res.status(200).json(buildBootstrap(user, sessionData));
-});
+}
+
+pollsRouter.get("/polls/random", handleRandomPolls);
+pollsRouter.get("/v2/polls/random", handleRandomPolls);
+pollsRouter.post("/polls/:pollId/vote", handleVote);
+pollsRouter.post("/v2/polls/:pollId/vote", handleVote);

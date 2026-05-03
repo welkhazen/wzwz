@@ -189,8 +189,6 @@ export function OnboardingJourney({
       startedFiredRef.current = true;
       track("onboarding_started", {});
     }
-    // Always reset swipe guide so it shows on every fresh onboarding session
-    localStorage.removeItem("raw.onboarding.swipe-guide-seen");
   }, []);
 
   useEffect(() => {
