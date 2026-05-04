@@ -4,9 +4,9 @@ import { ProblemSection } from "@/components/landing/ProblemSection";
 import { GlobeHero } from "@/components/landing/GlobeHero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { PollShowcase } from "@/components/landing/PollShowcase";
-import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
 import { Communities } from "@/components/landing/Communities";
 import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsightsSection";
+import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
 import { WheelReward } from "@/components/landing/WheelReward";
 import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
 import { AnonQuestionSection } from "@/components/landing/AnonQuestionSection";
@@ -55,7 +55,6 @@ export default function LandingShell({
         <GlobeHero onSignupClick={() => setShowSignup(true)} />
         <ProblemSection />
         <HowItWorks />
-        <AvatarShowcaseSection />
         <Communities onSignupClick={() => setShowSignup(true)} />
         <PersonalityInsightsSection />
         <EarnedWarUpgradesSection />
