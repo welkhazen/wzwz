@@ -13,7 +13,9 @@ create table if not exists public.avatar_catalog (
   updated_at timestamptz not null default now()
 );
 
-create unique index if not exists avatar_catalog_level_unique on public.avatar_catalog(level) where is_active = true;
+create unique index if not exists avatar_catalog_level_unique
+  on public.avatar_catalog(level)
+  where is_active = true;
 
 create table if not exists public.user_avatar_inventory (
   user_id text not null,
@@ -32,38 +34,61 @@ alter table public.avatar_catalog enable row level security;
 alter table public.user_avatar_inventory enable row level security;
 alter table public.user_avatar_selection enable row level security;
 
+grant usage on schema public to anon, authenticated;
+grant all on table public.avatar_catalog to anon, authenticated;
+grant all on table public.user_avatar_inventory to anon, authenticated;
+grant all on table public.user_avatar_selection to anon, authenticated;
+
 drop policy if exists avatar_catalog_read_all on public.avatar_catalog;
+drop policy if exists avatar_catalog_write_all on public.avatar_catalog;
+drop policy if exists avatar_inventory_read_all on public.user_avatar_inventory;
+drop policy if exists avatar_inventory_write_all on public.user_avatar_inventory;
+drop policy if exists avatar_selection_read_all on public.user_avatar_selection;
+drop policy if exists avatar_selection_write_all on public.user_avatar_selection;
+
 create policy avatar_catalog_read_all on public.avatar_catalog
 for select to anon, authenticated
 using (is_active = true);
 
-drop policy if exists avatar_catalog_write_all on public.avatar_catalog;
-create policy avatar_catalog_write_all on public.avatar_catalog
-for all to anon, authenticated
-using (true)
-with check (true);
+create policy avatar_catalog_write_admin_only on public.avatar_catalog
+for all to authenticated
+using (
+  exists (
+    select 1
+    from public.users u
+    where u.id::text = auth.uid()::text
+      and u.role = 'admin'
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.users u
+    where u.id::text = auth.uid()::text
+      and u.role = 'admin'
+  )
+);
 
-drop policy if exists avatar_inventory_read_all on public.user_avatar_inventory;
-create policy avatar_inventory_read_all on public.user_avatar_inventory
-for select to anon, authenticated
-using (true);
+create policy avatar_inventory_read_own on public.user_avatar_inventory
+for select to authenticated
+using (user_id = auth.uid()::text);
 
-drop policy if exists avatar_inventory_write_all on public.user_avatar_inventory;
-create policy avatar_inventory_write_all on public.user_avatar_inventory
-for all to anon, authenticated
-using (true)
-with check (true);
+create policy avatar_inventory_insert_own on public.user_avatar_inventory
+for insert to authenticated
+with check (user_id = auth.uid()::text);
 
-drop policy if exists avatar_selection_read_all on public.user_avatar_selection;
-create policy avatar_selection_read_all on public.user_avatar_selection
-for select to anon, authenticated
-using (true);
+create policy avatar_inventory_delete_own on public.user_avatar_inventory
+for delete to authenticated
+using (user_id = auth.uid()::text);
 
-drop policy if exists avatar_selection_write_all on public.user_avatar_selection;
-create policy avatar_selection_write_all on public.user_avatar_selection
-for all to anon, authenticated
-using (true)
-with check (true);
+create policy avatar_selection_read_own on public.user_avatar_selection
+for select to authenticated
+using (user_id = auth.uid()::text);
+
+create policy avatar_selection_upsert_own on public.user_avatar_selection
+for all to authenticated
+using (user_id = auth.uid()::text)
+with check (user_id = auth.uid()::text);
 
 create or replace function public.set_updated_at_avatar_catalog()
 returns trigger as $$
