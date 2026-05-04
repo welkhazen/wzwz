@@ -18,6 +18,13 @@ const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v1";
 const INVENTORY_STORAGE_PREFIX = "raw.avatar.inventory.v1.";
 const SELECTED_STORAGE_PREFIX = "raw.avatar.selected.v1.";
 let avatarBackendMissingTables = false;
+let avatarCatalogLocalWriteFailed = false;
+
+export function consumeAvatarCatalogLocalWriteFailure(): boolean {
+  const failed = avatarCatalogLocalWriteFailed;
+  avatarCatalogLocalWriteFailed = false;
+  return failed;
+}
 
 function isMissingAvatarTableError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
@@ -104,7 +111,14 @@ export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
 export function writeAvatarCatalogLocal(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
   const next = sanitizeCatalog(items);
   if (isBrowser()) {
-    window.localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(next));
+    avatarCatalogLocalWriteFailed = false;
+    try {
+      window.localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Large base64 images can exceed localStorage limits; keep runtime state and
+      // remote persistence flowing instead of hard-failing publish.
+      avatarCatalogLocalWriteFailed = true;
+    }
     dispatchCatalogUpdated();
   }
   return next;
@@ -151,6 +165,33 @@ export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
   }
 }
 
+export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem[]> {
+  const { data, error } = await supabase
+    .from("avatar_catalog")
+    .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active")
+    .eq("is_active", true)
+    .order("level", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message || "Could not load avatar catalog from Supabase.");
+  }
+
+  return sanitizeCatalog(
+    (data ?? []).map((row) => ({
+      id: row.id,
+      level: row.level,
+      name: row.name,
+      price: row.price,
+      imageSrc: row.image_src ?? undefined,
+      bg: row.bg,
+      figure: row.figure,
+      ring: row.ring,
+      glow: row.glow,
+      isActive: row.is_active,
+    }))
+  );
+}
+
 export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<AvatarCatalogItem[]> {
   const next = writeAvatarCatalogLocal(items);
 
@@ -191,6 +232,46 @@ export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<Ava
     }
   } catch {
     // Local cache remains the source of truth if Supabase write is unavailable.
+  }
+
+  return next;
+}
+
+export async function saveAvatarCatalogSupabaseOnly(items: AvatarCatalogItem[]): Promise<AvatarCatalogItem[]> {
+  const next = sanitizeCatalog(items);
+  const rows = next.map((item) => ({
+    id: item.id,
+    level: item.level,
+    name: item.name,
+    price: item.price,
+    image_src: item.imageSrc ?? null,
+    bg: item.bg,
+    figure: item.figure,
+    ring: item.ring,
+    glow: item.glow,
+    is_active: true,
+  }));
+
+  const { error: upsertError } = await supabase.from("avatar_catalog").upsert(rows, { onConflict: "id" });
+  if (upsertError) {
+    throw new Error(upsertError.message || "Could not save avatar catalog to Supabase.");
+  }
+
+  const currentIds = new Set(next.map((item) => item.id));
+  const { data: existingRows, error: existingError } = await supabase.from("avatar_catalog").select("id");
+  if (existingError || !existingRows) {
+    throw new Error(existingError?.message || "Could not verify saved avatar catalog.");
+  }
+
+  const retiredIds = existingRows.map((row) => row.id).filter((id) => !currentIds.has(id));
+  if (retiredIds.length > 0) {
+    const { error: retireError } = await supabase
+      .from("avatar_catalog")
+      .update({ is_active: false })
+      .in("id", retiredIds);
+    if (retireError) {
+      throw new Error(retireError.message || "Could not deactivate removed avatars.");
+    }
   }
 
   return next;

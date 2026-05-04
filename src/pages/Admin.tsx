@@ -8,8 +8,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { useRawStore } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
-import { type AvatarCatalogItem, loadAvatarCatalog, saveAvatarCatalog } from "@/lib/avatarCatalog";
+import {
+  type AvatarCatalogItem,
+  loadAvatarCatalogSupabaseOnly,
+  saveAvatarCatalogSupabaseOnly,
+} from "@/lib/avatarCatalog";
 import { upsertDailySpinAvatarPool } from "@/lib/dailySpinAvatarPool";
+import { supabase } from "@/lib/supabase";
 import {
   createAdminPoll,
   deleteAdminPoll,
@@ -62,6 +67,7 @@ type CutDecision = "pending" | "accepted" | "rejected";
 
 const MAX_SHEET_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_SLICE_CELLS = 100;
+const AVATAR_STORAGE_BUCKET = (import.meta.env.VITE_SUPABASE_AVATAR_BUCKET as string | undefined) ?? "avatars";
 
 export default function Admin() {
   const { user, isLoggedIn, isAdmin, sessionLoaded, logout } = useRawStore();
@@ -153,9 +159,13 @@ export default function Admin() {
 
   useEffect(() => {
     void (async () => {
-      const catalog = await loadAvatarCatalog();
-      setAvatarCatalogDraft(catalog);
-      setPublishInsertAt(catalog.length + 1);
+      try {
+        const catalog = await loadAvatarCatalogSupabaseOnly();
+        setAvatarCatalogDraft(catalog);
+        setPublishInsertAt(catalog.length + 1);
+      } catch {
+        toast({ title: "Could not load avatar catalog", description: "Check Supabase table access for avatar_catalog." });
+      }
     })();
   }, []);
 
@@ -944,10 +954,11 @@ export default function Admin() {
       await drawManualCropToCanvas(item, canvas);
       const blob = await canvasToBlob(canvas);
       const imageUrl = URL.createObjectURL(blob);
+      let previousUrl: string | null = null;
 
       setSlicedAvatars((previous) => previous.map((entry) => {
         if (entry.id !== itemId) return entry;
-        URL.revokeObjectURL(entry.imageUrl);
+        previousUrl = entry.imageUrl;
         return {
           ...entry,
           blob,
@@ -957,6 +968,12 @@ export default function Admin() {
           manualZoom: 1,
         };
       }));
+
+      if (previousUrl) {
+        // Revoke after the next paint to avoid races where React is still committing
+        // the old src and the browser attempts to resolve a just-revoked blob URL.
+        window.setTimeout(() => URL.revokeObjectURL(previousUrl as string), 250);
+      }
 
       toast({ title: "Manual crop applied" });
     } catch {
@@ -1128,23 +1145,15 @@ export default function Admin() {
         level: index + 1,
         isActive: true,
       }));
-      const saved = await saveAvatarCatalog(normalized);
+      const saved = await saveAvatarCatalogSupabaseOnly(normalized);
       setAvatarCatalogDraft(saved);
       toast({ title: "Avatar catalog saved", description: `${saved.length} avatars are now live.` });
-    } catch {
-      toast({ title: "Could not save catalog", description: "Please try again." });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Please try again.";
+      toast({ title: "Could not save catalog", description: message });
     } finally {
       setIsSavingAvatarCatalog(false);
     }
-  };
-
-  const blobToDataUrl = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error("Could not read avatar image"));
-      reader.readAsDataURL(blob);
-    });
   };
 
   const stepReviewCursor = (direction: -1 | 1) => {
@@ -1202,6 +1211,30 @@ export default function Admin() {
     return next;
   };
 
+  const uploadAvatarBlobToSupabase = async (
+    blob: Blob,
+    safeId: string,
+    target: "level" | "daily-spin"
+  ): Promise<string> => {
+    const folder = target === "daily-spin" ? "daily-spin" : "catalog";
+    const filePath = `${folder}/${safeId}-${Date.now()}.png`;
+    const { error: uploadError } = await supabase.storage
+      .from(AVATAR_STORAGE_BUCKET)
+      .upload(filePath, blob, {
+        cacheControl: "31536000",
+        contentType: "image/png",
+        upsert: true,
+      });
+    if (uploadError) {
+      throw new Error(uploadError.message || "Storage upload failed");
+    }
+    const { data } = supabase.storage.from(AVATAR_STORAGE_BUCKET).getPublicUrl(filePath);
+    if (!data.publicUrl) {
+      throw new Error("Storage public URL could not be created");
+    }
+    return data.publicUrl;
+  };
+
   const publishSlicedAvatarsToCatalog = async () => {
     if (slicedAvatars.length === 0) {
       toast({ title: "Slice avatars first" });
@@ -1220,7 +1253,7 @@ export default function Admin() {
 
     setIsSavingAvatarCatalog(true);
     try {
-      const latestCatalog = await loadAvatarCatalog();
+      const latestCatalog = await loadAvatarCatalogSupabaseOnly();
       const existing = latestCatalog.map((item) => ({ ...item }));
       const usedIds = new Set(existing.map((item) => item.id));
       const nextFromSlice: AvatarCatalogItem[] = [];
@@ -1228,9 +1261,12 @@ export default function Admin() {
 
       for (let index = 0; index < acceptedSlicedAvatars.length; index += 1) {
         const item = acceptedSlicedAvatars[index];
+        const safeId = getUniqueAvatarId(
+          item.name || item.id || (item.publishTarget === "daily-spin" ? `daily-spin-${index + 1}` : `avatar-${existing.length + index + 1}`),
+          usedIds
+        );
         if (item.publishTarget === "daily-spin") {
-          const imageSrc = await blobToDataUrl(item.blob);
-          const safeId = getUniqueAvatarId(item.name || item.id || `daily-spin-${index + 1}`, usedIds);
+          const imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "daily-spin");
           nextForDailySpin.push({
             id: safeId,
             name: item.name.trim() || `Daily Spin ${index + 1}`,
@@ -1240,8 +1276,7 @@ export default function Admin() {
         }
 
         const theme = getAvatar(existing.length + index + 1);
-        const imageSrc = await blobToDataUrl(item.blob);
-        const safeId = getUniqueAvatarId(item.name || item.id || `avatar-${existing.length + index + 1}`, usedIds);
+        const imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "level");
 
         nextFromSlice.push({
           id: safeId,
@@ -1265,7 +1300,7 @@ export default function Admin() {
         ...existing.slice(insertIndex),
       ].map((item, idx) => ({ ...item, level: idx + 1 }));
 
-      const saved = await saveAvatarCatalog(merged);
+      const saved = await saveAvatarCatalogSupabaseOnly(merged);
       if (nextForDailySpin.length > 0) {
         upsertDailySpinAvatarPool(nextForDailySpin);
       }
@@ -1275,8 +1310,9 @@ export default function Admin() {
         title: "Publish complete",
         description: `${nextFromSlice.length} to levels, ${nextForDailySpin.length} to daily spin pool.`,
       });
-    } catch {
-      toast({ title: "Could not publish avatars", description: "Try again after slicing." });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Try again after slicing.";
+      toast({ title: "Could not publish avatars", description: message });
     } finally {
       setIsSavingAvatarCatalog(false);
     }
@@ -2061,13 +2097,36 @@ export default function Admin() {
                               className="w-full rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
                               placeholder="Avatar name"
                             />
-                            <input
-                              type="text"
-                              value={item.imageSrc || ""}
-                              onChange={(event) => updateAvatarCatalogDraftItem(item.id, { imageSrc: event.target.value })}
-                              className="w-full rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-xs text-raw-text outline-none focus:border-raw-gold/40"
-                              placeholder="Image URL or data URL"
-                            />
+                            <div className="flex gap-1.5">
+                              <input
+                                type="text"
+                                value={item.imageSrc || ""}
+                                onChange={(event) => updateAvatarCatalogDraftItem(item.id, { imageSrc: event.target.value })}
+                                className="min-w-0 flex-1 rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-xs text-raw-text outline-none focus:border-raw-gold/40"
+                                placeholder="Image URL or paste data URL"
+                              />
+                              <label
+                                className="flex cursor-pointer items-center justify-center rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2 text-raw-silver/60 transition hover:border-raw-gold/40 hover:text-raw-gold"
+                                title="Upload image file"
+                              >
+                                <Upload className="h-3.5 w-3.5" />
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="sr-only"
+                                  onChange={(event) => {
+                                    const file = event.target.files?.[0];
+                                    if (!file) return;
+                                    const reader = new FileReader();
+                                    reader.onload = () => {
+                                      updateAvatarCatalogDraftItem(item.id, { imageSrc: String(reader.result) });
+                                    };
+                                    reader.readAsDataURL(file);
+                                    event.target.value = "";
+                                  }}
+                                />
+                              </label>
+                            </div>
                           </div>
                           <input
                             type="text"
