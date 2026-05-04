@@ -115,7 +115,7 @@ const VELOCITY_THRESHOLD = 400;
 export function PollShowcase() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
@@ -163,6 +163,9 @@ export function PollShowcase() {
 
   useEffect(() => {
     setMounted(true);
+    const handler = () => setOpen(true);
+    window.addEventListener("open-poll-showcase", handler);
+    return () => window.removeEventListener("open-poll-showcase", handler);
   }, []);
 
   // Reset card position whenever the poll changes
