@@ -17,6 +17,8 @@ import {
   readDailySpinAvatarPool,
   upsertDailySpinAvatarPool,
   writeDailySpinAvatarPool,
+  loadDailySpinPoolFromSupabase,
+  saveDailySpinPoolToSupabase,
   type DailySpinAvatarPoolItem,
 } from "@/lib/dailySpinAvatarPool";
 import { supabase } from "@/lib/supabase";
@@ -186,6 +188,14 @@ export default function Admin() {
   }, []);
 
   useEffect(() => {
+    void loadDailySpinPoolFromSupabase()
+      .then((items) => setDailySpinPoolDraft(items))
+      .catch(() => {
+        // Keep localStorage draft as fallback - no toast needed
+      });
+  }, []);
+
+  useEffect(() => {
     sheetPreviewUrlRef.current = sheetPreviewUrl;
   }, [sheetPreviewUrl]);
 
@@ -256,22 +266,23 @@ export default function Admin() {
 
   const saveDailySpinPoolDraft = () => {
     setIsSavingSpinPool(true);
-    try {
-      const normalized = dailySpinPoolDraft
-        .map((item, index) => ({
-          id: (item.id || `daily-spin-${index + 1}`).trim(),
-          name: (item.name || `Spin ${index + 1}`).trim(),
-          imageSrc: (item.imageSrc || "").trim(),
-        }))
-        .filter((item) => item.id && item.name && item.imageSrc);
-      const saved = writeDailySpinAvatarPool(normalized);
-      setDailySpinPoolDraft(saved);
-      toast({ title: "Daily spin pool saved", description: `${saved.length} entries are now active.` });
-    } catch {
-      toast({ title: "Could not save spin pool", description: "Please try again." });
-    } finally {
-      setIsSavingSpinPool(false);
-    }
+    const normalized = dailySpinPoolDraft
+      .map((item, index) => ({
+        id: (item.id || `daily-spin-${index + 1}`).trim(),
+        name: (item.name || `Spin ${index + 1}`).trim(),
+        imageSrc: (item.imageSrc || "").trim(),
+      }))
+      .filter((item) => item.id && item.name && item.imageSrc);
+    void saveDailySpinPoolToSupabase(normalized)
+      .then((saved) => {
+        setDailySpinPoolDraft(saved);
+        toast({ title: "Daily spin pool saved", description: `${saved.length} entries are now active.` });
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Please try again.";
+        toast({ title: "Could not save spin pool", description: msg });
+      })
+      .finally(() => setIsSavingSpinPool(false));
   };
 
   const addDailySpinEntry = () => {
@@ -384,7 +395,14 @@ export default function Admin() {
   };
 
   const removeDailySpinEntry = (id: string) => {
-    setDailySpinPoolDraft((previous) => previous.filter((item) => item.id !== id));
+    const next = dailySpinPoolDraft.filter((item) => item.id !== id);
+    setDailySpinPoolDraft(next);
+    void saveDailySpinPoolToSupabase(next).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Please try again.";
+      toast({ title: "Could not delete spin entry", description: msg });
+      // revert on failure
+      setDailySpinPoolDraft(dailySpinPoolDraft);
+    });
   };
 
   useEffect(() => {
@@ -1261,11 +1279,33 @@ export default function Admin() {
     setAvatarCatalogDraft((previous) => previous.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   };
 
-  const removeAvatarCatalogDraftItem = (id: string) => {
-    setAvatarCatalogDraft((previous) => {
-      const filtered = previous.filter((item) => item.id !== id);
-      return filtered.map((item, index) => ({ ...item, level: index + 1 }));
-    });
+  const removeAvatarCatalogDraftItem = async (id: string) => {
+    const previous = avatarCatalogDraft;
+    const next = previous
+      .filter((item) => item.id !== id)
+      .map((item, index) => ({ ...item, level: index + 1 }));
+
+    setAvatarCatalogDraft(next);
+    setIsSavingAvatarCatalog(true);
+    try {
+      const normalized = next.map((item, index) => ({
+        ...item,
+        id: item.id.trim() || `avatar-${index + 1}`,
+        name: item.name.trim() || `Avatar ${index + 1}`,
+        price: item.price.trim() || "0",
+        level: index + 1,
+        isActive: true,
+      }));
+      const saved = await saveAvatarCatalogSupabaseOnly(normalized);
+      setAvatarCatalogDraft(saved);
+      toast({ title: "Avatar removed", description: "Catalog update saved." });
+    } catch (error) {
+      setAvatarCatalogDraft(previous);
+      const message = error instanceof Error ? error.message : "Please try again.";
+      toast({ title: "Could not delete avatar", description: message });
+    } finally {
+      setIsSavingAvatarCatalog(false);
+    }
   };
 
   const addAvatarCatalogDraftItem = () => {
@@ -1892,7 +1932,7 @@ export default function Admin() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDailySpinPoolDraft(readDailySpinAvatarPool())}
+                  onClick={() => void loadDailySpinPoolFromSupabase().then(setDailySpinPoolDraft).catch(() => setDailySpinPoolDraft(readDailySpinAvatarPool()))}
                   className="rounded-lg border border-raw-border/25 px-2.5 py-1.5 text-[11px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text"
                 >
                   Reload from storage
@@ -2656,8 +2696,9 @@ export default function Admin() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => removeAvatarCatalogDraftItem(item.id)}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-raw-border/25 text-raw-silver/55 hover:border-red-400/40 hover:text-red-300"
+                              onClick={() => void removeAvatarCatalogDraftItem(item.id)}
+                              disabled={isSavingAvatarCatalog}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-raw-border/25 text-raw-silver/55 hover:border-red-400/40 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
                               aria-label={`Remove ${item.name}`}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
