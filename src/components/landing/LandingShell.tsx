@@ -4,14 +4,12 @@ import { Navbar } from "@/components/landing/Navbar";
 import { ProblemSection } from "@/components/landing/ProblemSection";
 import { GlobeHero } from "@/components/landing/GlobeHero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
-import { PollBenefitsSection } from "@/components/landing/PollBenefitsSection";
 import { PollShowcase } from "@/components/landing/PollShowcase";
 import { Communities } from "@/components/landing/Communities";
 import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsightsSection";
 import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
 import { WheelReward } from "@/components/landing/WheelReward";
 import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
-import { AnonQuestionSection } from "@/components/landing/AnonQuestionSection";
 import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -56,15 +54,13 @@ export default function LandingShell({
         <GlobeHero onSignupClick={() => setShowSignup(true)} />
         <ProblemSection />
         <HowItWorks />
-        <PollBenefitsSection />
+        <AvatarShowcaseSection />
+        <PollShowcase />
         <Communities onSignupClick={() => setShowSignup(true)} />
         <PersonalityInsightsSection />
         <EarnedWarUpgradesSection />
-        <PollShowcase />
-        <AvatarShowcaseSection />
         <WheelReward onSignupClick={() => setShowSignup(true)} />
         <WhyAnonymity />
-        <AnonQuestionSection />
         <TestimonialsSection />
         <LandingFooter />
       </div>
