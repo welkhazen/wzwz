@@ -141,29 +141,3 @@ export async function fetchActivePolls(limit: number): Promise<Poll[] | null> {
 
   return randomize(normalized).slice(0, limit);
 }
-
-export async function fetchPollComments(pollId: string): Promise<string[]> {
-  const supabase = getSupabaseClient();
-  if (!supabase) return [];
-
-  const { data, error } = await supabase
-    .from("poll_comments")
-    .select("body")
-    .eq("poll_id", pollId)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  if (error || !data) return [];
-  return data.map((row) => (row as { body: string }).body);
-}
-
-export async function savePollComment(pollId: string, text: string): Promise<boolean> {
-  const supabase = getSupabaseClient();
-  if (!supabase) return false;
-
-  const { error } = await supabase
-    .from("poll_comments")
-    .insert({ poll_id: pollId, body: text });
-
-  return !error;
-}
