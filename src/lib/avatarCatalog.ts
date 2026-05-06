@@ -173,10 +173,6 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
     .order("level", { ascending: true });
 
   if (error) {
-    // Supabase unavailable — fall back to whatever is in local cache / defaults
-    // so the admin panel still shows something rather than going blank.
-    const local = readAvatarCatalogLocal();
-    if (local.length > 0) return local;
     throw new Error(error.message || "Could not load avatar catalog from Supabase.");
   }
 
@@ -195,7 +191,6 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
     }))
   );
 
-  // Keep local cache in sync so fallback has fresh data next time.
   writeAvatarCatalogLocal(mapped);
   return mapped;
 }
