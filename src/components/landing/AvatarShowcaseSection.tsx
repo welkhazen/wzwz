@@ -175,12 +175,22 @@ export function AvatarShowcaseSection() {
     <LandingSectionShell
       id="avatar"
       sectionRef={sectionRef as React.Ref<HTMLElement>}
-      title="Your avatar. Your Identity. Your App."
-      description="On raW, your username is your constant identity.
+      title={
+        <span className="inline-flex flex-col items-center leading-[1.05]">
+          <span className="text-[1em]">Your Avatar.</span>
+          <span className="text-[0.8em]">Your Identity.</span>
+          <span className="text-[0.6em]">Your App.</span>
+        </span>
+      }
+      description={
+        <span className="block whitespace-pre-line">
+          {`On raW, your username is your constant identity.
 
 Your avatar is your evolving identity.
 
-Just like in real life, every person is born with a name, an appearance, and an inner personality. On raW, your username is your name, your avatar is your appearance, and your answers, choices, and interactions reveal the deeper personality behind it."
+Just like in real life, every person is born with a name, an appearance, and an inner personality. On raW, your username is your name, your avatar is your appearance, and your answers, choices, and interactions reveal the deeper personality behind it.`}
+        </span>
+      }
     >
       <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8">
         <PhoneMockup className="w-full max-w-[360px]" showStatusBar={false}>
