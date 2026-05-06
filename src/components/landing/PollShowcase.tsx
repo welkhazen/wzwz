@@ -28,6 +28,19 @@ const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
   noPercent: Math.round((s.noVotes / (s.yesVotes + s.noVotes)) * 100),
 }));
 
+const apiPollsToPollData = (polls: Poll[]): PollData[] =>
+  polls.map((poll) => {
+    const yesVotes = poll.options.find((option) => option.text.toLowerCase() === "yes")?.votes ?? 0;
+    const noVotes = poll.options.find((option) => option.text.toLowerCase() === "no")?.votes ?? 0;
+    const totalVotes = yesVotes + noVotes;
+
+    return {
+      id: poll.id,
+      question: poll.question,
+      yesPercent: totalVotes > 0 ? Math.round((yesVotes / totalVotes) * 100) : 50,
+      noPercent: totalVotes > 0 ? Math.round((noVotes / totalVotes) * 100) : 50,
+    };
+  });
 
 function GoldIcosahedron({ className = "" }: { className?: string }) {
   return (
@@ -119,7 +132,18 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     ["rgba(239,68,68,0.18)", "rgba(239,68,68,0)"]
   );
 
-  const POLLS: PollData[] = FALLBACK_POLLS;
+  const { data: fetchedPolls } = useQuery({
+    queryKey: ["landing-poll-showcase", "polls"],
+    queryFn: async () => {
+      const polls = await fetchSupabasePolls(5);
+      if (polls.length === 0) return null;
+      return apiPollsToPollData(polls);
+    },
+    retry: 1,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const POLLS: PollData[] = fetchedPolls ?? FALLBACK_POLLS;
 
   useEffect(() => {
     setMounted(true);
@@ -163,6 +187,32 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     },
     [handleAnswer, x]
   );
+
+  const currentPoll = POLLS[index];
+
+  useEffect(() => {
+    if (!currentPoll?.id) {
+      setDbComments([]);
+      return;
+    }
+
+    let isMounted = true;
+    fetchPollComments(currentPoll.id)
+      .then((comments) => {
+        if (isMounted) {
+          setDbComments(comments.map((comment) => comment.text));
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setDbComments([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPoll?.id]);
 
   if (!mounted || !open) return null;
 
