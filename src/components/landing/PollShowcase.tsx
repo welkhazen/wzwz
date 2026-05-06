@@ -33,8 +33,8 @@ const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
 
 const apiPollsToPollData = (polls: Poll[]): PollData[] =>
   polls.map((poll) => {
-    const yesVotes = poll.options.find((option) => option.text?.trim().toLowerCase() === "yes")?.votes ?? 0;
-    const noVotes = poll.options.find((option) => option.text?.trim().toLowerCase() === "no")?.votes ?? 0;
+    const yesVotes = poll.options.find((option) => option.label.toLowerCase() === "yes")?.votes ?? 0;
+    const noVotes = poll.options.find((option) => option.label.toLowerCase() === "no")?.votes ?? 0;
     const totalVotes = yesVotes + noVotes;
 
     return {
