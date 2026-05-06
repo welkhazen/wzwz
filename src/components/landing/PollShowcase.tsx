@@ -319,7 +319,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                 <GoldIcosahedron className="mb-5 h-20 w-20" />
 
                 <p className="text-[11px] font-bold uppercase tracking-[0.36em] text-[#F1C42D] [text-shadow:0_0_8px_rgba(241,196,45,0.45)]">
-                  Poll Question
+                  Answer So You Can Instantly See What Everyone Else Thinks.
                 </p>
 
                 <p
@@ -335,7 +335,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                 <div className="mt-6 h-px w-16 bg-white/20" />
 
                 <p className="mt-4 text-[11px] tracking-[0.05em] text-white/45">
-                  {selected ? `You answered: ${selected.toUpperCase()}` : "Swipe right for Yes · left for No"}
+                  {selected ? `You answered: ${selected.toUpperCase()}` : "Swipe/Click To Answer"}
                 </p>
 
                 <div className="mt-5 grid w-full grid-cols-2 gap-3">
