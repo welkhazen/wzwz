@@ -175,7 +175,7 @@ export function AvatarShowcaseSection() {
     <LandingSectionShell
       id="avatar"
       sectionRef={sectionRef as React.Ref<HTMLElement>}
-      title="Your avatar is your identity"
+      title="Your avatar. Your Identity. Your App."
       description="On raW, your username is your constant identity.
 
 Your avatar is your evolving identity.
