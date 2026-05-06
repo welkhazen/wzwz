@@ -20,7 +20,10 @@
       "Bash(curl -o CLAUDE.md https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/CLAUDE.md)",
       "Bash(xargs grep *)",
       "Bash(npx tsc *)",
-      "Bash(findstr /i \"SUPABASE VITE_\")"
+      "Bash(findstr /i \"SUPABASE VITE_\")",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Fix anon RLS access, poll_comments table, and WebGL context pressure *)",
+      "Bash(git push *)"
     ]
   }
 }
