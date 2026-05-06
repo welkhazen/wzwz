@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, X, Send } from "lucide-react";
 import {
   motion,
@@ -8,9 +9,8 @@ import {
   animate,
   AnimatePresence,
 } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/api/client";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
+import { apiRequest } from "@/lib/api/client";
 import type { Poll } from "@/store/types";
 
 interface PollData {
@@ -20,26 +20,30 @@ interface PollData {
   noPercent: number;
 }
 
+interface PollShowcaseProps {
+  initialOpen?: boolean;
+  onResolved?: () => void;
+}
+
 const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
   question: s.question,
   yesPercent: Math.round((s.yesVotes / (s.yesVotes + s.noVotes)) * 100),
   noPercent: Math.round((s.noVotes / (s.yesVotes + s.noVotes)) * 100),
 }));
 
-function apiPollsToPollData(polls: Poll[]): PollData[] {
-  return polls.slice(0, 3).map((p) => {
-    const yes = p.options.find((o) => o.text.toLowerCase() === "yes");
-    const no = p.options.find((o) => o.text.toLowerCase() === "no");
-    const total = (yes?.votes ?? 0) + (no?.votes ?? 0);
-    const yesPercent = total > 0 ? Math.round(((yes?.votes ?? 0) / total) * 100) : 50;
+const apiPollsToPollData = (polls: Poll[]): PollData[] =>
+  polls.map((poll) => {
+    const yesVotes = poll.options.find((option) => option.label.toLowerCase() === "yes")?.votes ?? 0;
+    const noVotes = poll.options.find((option) => option.label.toLowerCase() === "no")?.votes ?? 0;
+    const totalVotes = yesVotes + noVotes;
+
     return {
-      id: p.id,
-      question: p.question,
-      yesPercent,
-      noPercent: 100 - yesPercent,
+      id: poll.id,
+      question: poll.question,
+      yesPercent: totalVotes > 0 ? Math.round((yesVotes / totalVotes) * 100) : 50,
+      noPercent: totalVotes > 0 ? Math.round((noVotes / totalVotes) * 100) : 50,
     };
   });
-}
 
 function GoldIcosahedron({ className = "" }: { className?: string }) {
   return (
@@ -112,10 +116,10 @@ const COMMENT_CLIP =
 const SWIPE_THRESHOLD = 80;
 const VELOCITY_THRESHOLD = 400;
 
-export function PollShowcase() {
+export function PollShowcase({ initialOpen = true, onResolved }: PollShowcaseProps) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(initialOpen);
   const [mounted, setMounted] = useState(false);
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
@@ -135,31 +139,7 @@ export function PollShowcase() {
     ["rgba(239,68,68,0.18)", "rgba(239,68,68,0)"]
   );
 
-  const pollsQuery = useQuery({
-    queryKey: ["polls", "showcase"],
-    retry: false,
-    queryFn: async (): Promise<Poll[]> => {
-      const res = await apiRequest<{ polls: Poll[] }>("/api/polls/random?limit=3");
-      return res.polls;
-    },
-  });
-
-  const POLLS: PollData[] =
-    pollsQuery.data && pollsQuery.data.length > 0
-      ? apiPollsToPollData(pollsQuery.data)
-      : FALLBACK_POLLS;
-
-  const poll = POLLS[index] as PollData | undefined;
-
-  const commentsQuery = useQuery({
-    queryKey: ["poll-comments", poll?.id],
-    enabled: !!poll?.id,
-    retry: false,
-    queryFn: async () => {
-      const res = await apiRequest<{ comments: string[] }>(`/api/polls/${poll!.id}/comments`);
-      return res.comments;
-    },
-  });
+  const POLLS: PollData[] = FALLBACK_POLLS;
 
   useEffect(() => {
     setMounted(true);
@@ -168,6 +148,11 @@ export function PollShowcase() {
     return () => window.removeEventListener("open-poll-showcase", handler);
   }, []);
 
+  const closeShowcase = useCallback(() => {
+    setOpen(false);
+    onResolved?.();
+  }, [onResolved]);
+
   // Reset card position whenever the poll changes
   useEffect(() => {
     x.set(0);
@@ -175,9 +160,15 @@ export function PollShowcase() {
 
   const handleAnswer = useCallback(
     (choice: "yes" | "no") => {
-      setAnswers((prev) => ({ ...prev, [index]: choice }));
+      setAnswers((prev) => {
+        const next = { ...prev, [index]: choice };
+        if (Object.keys(next).length >= POLLS.length) {
+          window.setTimeout(closeShowcase, 350);
+        }
+        return next;
+      });
     },
-    [index]
+    [POLLS.length, closeShowcase, index]
   );
 
   const handleDragEnd = useCallback(
@@ -207,8 +198,7 @@ export function PollShowcase() {
   const selected = answers[index];
   const currentPoll = POLLS[index];
   const showComments = !!selected;
-  const backendComments = commentsQuery.data ?? [];
-  const allComments = [...backendComments, ...(extraComments[index] ?? [])];
+  const allComments = extraComments[index] ?? [];
 
   const handleSubmitComment = () => {
     const text = (commentInputs[index] ?? "").trim();
@@ -218,12 +208,6 @@ export function PollShowcase() {
       [index]: [...(prev[index] ?? []), text],
     }));
     setCommentInputs((prev) => ({ ...prev, [index]: "" }));
-    if (currentPoll?.id) {
-      apiRequest(`/api/polls/${currentPoll.id}/comments`, {
-        method: "POST",
-        body: JSON.stringify({ text }),
-      }).catch(() => {/* optimistic — already added locally */});
-    }
   };
 
   const overlay = (
@@ -234,12 +218,12 @@ export function PollShowcase() {
           "radial-gradient(circle at 1px 1px, rgba(217,217,217,0.06) 1px, transparent 0)",
         backgroundSize: "14px 14px",
       }}
-      onClick={() => setOpen(false)}
+      onClick={closeShowcase}
     >
       <div className="relative w-full max-w-md" onClick={(event) => event.stopPropagation()}>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={closeShowcase}
           aria-label="Close poll preview"
           className="absolute -top-12 right-0 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white/70 transition hover:bg-white/10 hover:text-white"
         >
