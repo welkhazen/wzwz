@@ -58,6 +58,27 @@ function getPasswordStrength(password: string) {
   return { label: "Strong", tone: "text-emerald-300", checks };
 }
 
+const LAUNCH_DATE = new Date("2026-05-27T00:00:00Z");
+
+function useCountdown(target: Date) {
+  const [timeLeft, setTimeLeft] = useState(() => Math.max(0, target.getTime() - Date.now()));
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setTimeLeft(Math.max(0, target.getTime() - Date.now()));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [target]);
+
+  const totalSeconds = Math.floor(timeLeft / 1000);
+  return {
+    days: Math.floor(totalSeconds / 86400),
+    hours: Math.floor((totalSeconds % 86400) / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: totalSeconds % 60,
+  };
+}
+
 export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupOtp, onLogin, source }: SignupModalProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -73,6 +94,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const openedFiredRef = useRef(false);
+  const countdown = useCountdown(LAUNCH_DATE);
 
   useEffect(() => {
     if (open && !openedFiredRef.current) {
@@ -255,7 +277,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
           </button>
         </div>
 
-        {isSignup && signupStep === "details" ? (
+        {isSignup ? (
           <form onSubmit={handleStartSignup} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs text-raw-silver/40">Username</label>
@@ -338,77 +360,24 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
               </p>
             )}
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="mt-2 w-full rounded-xl bg-raw-gold py-3 text-sm font-bold text-raw-ink transition-all hover:bg-raw-gold/90 hover:shadow-lg hover:shadow-raw-gold/20 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isSubmitting ? "Creating..." : "Create Account"}
-            </button>
-          </form>
-        ) : isSignup ? (
-          <form onSubmit={handleVerifySignup} className="space-y-4">
-            <div className="rounded-xl border border-raw-border/60 bg-raw-black/35 px-4 py-3 text-sm text-raw-silver/75">
-              <p className="text-xs uppercase tracking-[0.24em] text-raw-silver/35">Delivery</p>
-              <p className="mt-2 text-raw-text">Code sent to {maskPhone(phone)}</p>
-              <p className="mt-1 text-[11px] text-raw-silver/40">Channels: {channelSummary}</p>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs text-raw-silver/40">6-digit code</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="\d{6}"
-                maxLength={6}
-                value={code}
-                onChange={(event) => {
-                  const nextCode = event.target.value.replace(/\D/g, "").slice(0, 6);
-                  setCode(nextCode);
-                  if (nextCode.length === 6 && !isSubmitting) {
-                    void handleVerifySignup(undefined, nextCode);
-                  }
-                }}
-                placeholder="000000"
-                autoFocus
-                className="w-full rounded-xl border border-raw-border bg-raw-black/50 px-4 py-3 text-center text-lg tracking-[0.45em] text-raw-text placeholder:text-raw-silver/25 transition-all focus:border-raw-gold/30 focus:outline-none focus:ring-1 focus:ring-raw-gold/20"
-              />
-            </div>
-
-            {error && (
-              <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-200">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="mt-2 w-full rounded-xl bg-raw-gold py-3 text-sm font-bold text-raw-ink transition-all hover:bg-raw-gold/90 hover:shadow-lg hover:shadow-raw-gold/20 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isSubmitting ? "Checking..." : "Verify & Create Account"}
-            </button>
-
-            <div className="flex items-center justify-between text-xs text-raw-silver/40">
-              <button
-                type="button"
-                onClick={() => {
-                  setSignupStep("details");
-                  setCode("");
-                  setError("");
-                }}
-                className="transition-colors hover:text-raw-silver"
-              >
-                Back to details
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleStartSignup()}
-                disabled={cooldown > 0 || isSubmitting}
-                className="transition-colors hover:text-raw-silver disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
-              </button>
+            {/* Countdown replaces the submit button until launch */}
+            <div className="mt-2 flex flex-col items-center gap-2 rounded-xl border border-raw-border/40 bg-raw-black/50 py-3">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-raw-silver/40">Sign-ups open in</p>
+              <div className="flex gap-2">
+                {[
+                  { value: countdown.days, label: "Days" },
+                  { value: countdown.hours, label: "Hours" },
+                  { value: countdown.minutes, label: "Min" },
+                  { value: countdown.seconds, label: "Sec" },
+                ].map(({ value, label }) => (
+                  <div key={label} className="flex flex-col items-center gap-1">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-raw-border/60 bg-raw-black/60 font-display text-xl text-raw-text tabular-nums">
+                      {String(value).padStart(2, "0")}
+                    </div>
+                    <span className="text-[9px] uppercase tracking-[0.12em] text-raw-silver/35">{label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </form>
         ) : (
