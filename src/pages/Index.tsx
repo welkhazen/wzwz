@@ -19,6 +19,7 @@ const Index = () => {
     setShowSignup,
     avatarLevel,
     setAvatarLevel,
+    selectAvatarForOnboarding,
     ownedAvatarLevels,
     unlockAvatarLevel,
     avatarPricesByLevel,
@@ -83,7 +84,7 @@ const Index = () => {
           user={user}
           polls={polls}
           avatarIndex={avatarLevel}
-          onAvatarChange={setAvatarLevel}
+          onAvatarChange={selectAvatarForOnboarding}
           onboardingStep={onboardingStep}
           onboardingAnsweredPollIds={onboardingAnsweredPollIds}
           onSetOnboardingStep={setOnboardingStep}

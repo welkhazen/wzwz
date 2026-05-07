@@ -27,6 +27,7 @@ export function useRawStore() {
     avatarLevel: rewards.avatarLevel,
     setAvatarLevel: rewards.setAvatarLevel,
     changeAvatarLevel: rewards.changeAvatarLevel,
+    selectAvatarForOnboarding: rewards.selectAvatarForOnboarding,
     avatarCatalog: rewards.avatarCatalog,
     ownedAvatarLevels: rewards.ownedAvatarLevels,
     unlockAvatarLevel: rewards.unlockAvatarLevel,

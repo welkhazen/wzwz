@@ -133,13 +133,21 @@ export function useRewards(user: User | null) {
 
   const changeAvatarLevel = setAvatarLevel;
 
+  const selectAvatarForOnboarding = useCallback((toLevel: number) => {
+    const maxLevel = avatarCatalog.length;
+    const clamped = Math.min(Math.max(1, toLevel), Math.max(1, maxLevel));
+    if (!avatarCatalog[clamped - 1]) return;
+    setAvatarLevelState(clamped);
+  }, [avatarCatalog]);
+
   return useMemo(() => ({
     avatarLevel,
     setAvatarLevel,
     changeAvatarLevel,
+    selectAvatarForOnboarding,
     avatarCatalog,
     ownedAvatarLevels,
     unlockAvatarLevel,
     avatarPricesByLevel,
-  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, ownedAvatarLevels, setAvatarLevel, unlockAvatarLevel]);
+  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
 }
