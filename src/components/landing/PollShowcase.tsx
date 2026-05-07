@@ -1,13 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import {
-  motion,
-  useMotionValue,
-  useTransform,
-  animate,
-  AnimatePresence,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
 
 interface PollData {
@@ -95,29 +89,13 @@ const CARD_INNER_CLIP =
 const BUTTON_CLIP =
   "polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)";
 
-const SWIPE_THRESHOLD = 80;
-const VELOCITY_THRESHOLD = 400;
 
 export function PollShowcase({ initialOpen = true, onResolved }: PollShowcaseProps) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
   const [open, setOpen] = useState(initialOpen);
   const [mounted, setMounted] = useState(false);
-  const isDragging = useRef(false);
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 0, 200], [-14, 0, 14]);
-  const yesOpacity = useTransform(x, [20, 90], [0, 1]);
-  const noOpacity = useTransform(x, [-90, -20], [1, 0]);
-  const yesBg = useTransform(
-    x,
-    [0, 120],
-    ["rgba(16,185,129,0)", "rgba(16,185,129,0.18)"]
-  );
-  const noBg = useTransform(
-    x,
-    [-120, 0],
-    ["rgba(239,68,68,0.18)", "rgba(239,68,68,0)"]
-  );
+  const [waterFilled, setWaterFilled] = useState(false);
 
   const POLLS: PollData[] = FALLBACK_POLLS;
 
@@ -133,35 +111,17 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     onResolved?.();
   }, [onResolved]);
 
-  // Reset card position whenever the poll changes
+  // Reset water fill when poll changes
   useEffect(() => {
-    x.set(0);
-  }, [index, x]);
+    setWaterFilled(false);
+  }, [index]);
 
   const handleAnswer = useCallback(
     (choice: "yes" | "no") => {
       setAnswers((prev) => ({ ...prev, [index]: choice }));
+      setTimeout(() => setWaterFilled(true), 60);
     },
     [index]
-  );
-
-  const handleDragEnd = useCallback(
-    (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
-      const { offset, velocity } = info;
-      if (offset.x > SWIPE_THRESHOLD || velocity.x > VELOCITY_THRESHOLD) {
-        animate(x, 600, { type: "spring", stiffness: 180, damping: 22 }).then(
-          () => { handleAnswer("yes"); x.set(0); }
-        );
-      } else if (offset.x < -SWIPE_THRESHOLD || velocity.x < -VELOCITY_THRESHOLD) {
-        animate(x, -600, { type: "spring", stiffness: 180, damping: 22 }).then(
-          () => { handleAnswer("no"); x.set(0); }
-        );
-      } else {
-        animate(x, 0, { type: "spring", stiffness: 400, damping: 28 });
-      }
-      isDragging.current = false;
-    },
-    [handleAnswer, x]
   );
 
   if (!mounted || !open) return null;
@@ -235,12 +195,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.94 }}
               transition={{ duration: 0.18 }}
-              style={{ x, rotate, position: "relative", width: "100%" }}
-              drag={selected ? false : "x"}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.18}
-              onDragStart={() => { isDragging.current = true; }}
-              onDragEnd={handleDragEnd}
+              style={{ position: "relative", width: "100%" }}
               className="w-full max-w-[330px] mx-auto"
             >
           <div
@@ -253,51 +208,6 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                 "0 0 60px rgba(241,196,45,0.18), 0 0 24px rgba(241,196,45,0.22)",
             }}
           >
-            {/* Swipe bg tints */}
-            <motion.div
-              className="absolute inset-0 rounded-[1px] pointer-events-none z-10"
-              style={{ background: yesBg, clipPath: CARD_CLIP }}
-            />
-            <motion.div
-              className="absolute inset-0 rounded-[1px] pointer-events-none z-10"
-              style={{ background: noBg, clipPath: CARD_CLIP }}
-            />
-
-            {/* YES indicator */}
-            <motion.div
-              className="absolute top-5 right-5 z-20 pointer-events-none"
-              style={{ opacity: yesOpacity }}
-            >
-              <div
-                className="rounded-md px-2.5 py-1 font-bold text-xs tracking-widest uppercase"
-                style={{
-                  border: "2px solid rgba(16,185,129,0.8)",
-                  color: "rgba(16,185,129,0.95)",
-                  background: "rgba(16,185,129,0.1)",
-                  textShadow: "0 0 10px rgba(16,185,129,0.55)",
-                }}
-              >
-                YES ✓
-              </div>
-            </motion.div>
-
-            {/* NO indicator */}
-            <motion.div
-              className="absolute top-5 left-5 z-20 pointer-events-none"
-              style={{ opacity: noOpacity }}
-            >
-              <div
-                className="rounded-md px-2.5 py-1 font-bold text-xs tracking-widest uppercase"
-                style={{
-                  border: "2px solid rgba(239,68,68,0.8)",
-                  color: "rgba(239,68,68,0.95)",
-                  background: "rgba(239,68,68,0.1)",
-                  textShadow: "0 0 10px rgba(239,68,68,0.55)",
-                }}
-              >
-                NO ✗
-              </div>
-            </motion.div>
 
             <div
               className="relative px-7 pt-7 pb-7"
@@ -335,16 +245,17 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                 <div className="mt-6 h-px w-16 bg-white/20" />
 
                 <p className="mt-4 text-[11px] tracking-[0.05em] text-white/45">
-                  {selected ? `You answered: ${selected.toUpperCase()}` : "Swipe/Click To Answer"}
+                  {selected ? `You answered: ${selected.toUpperCase()}` : "Click To Answer"}
                 </p>
 
                 <div className="mt-5 grid w-full grid-cols-2 gap-3">
-                  {/* No button */}
+                  {/* No button — water fills from the left */}
                   <button
                     type="button"
-                    onClick={() => { if (isDragging.current) { isDragging.current = false; return; } handleAnswer("no"); }}
+                    disabled={!!selected}
+                    onClick={() => handleAnswer("no")}
                     aria-label="Vote no"
-                    className="group relative h-12 transition active:scale-95"
+                    className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
                     style={{ clipPath: BUTTON_CLIP }}
                   >
                     <span
@@ -358,12 +269,29 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                       className="absolute inset-[1.5px]"
                       style={{
                         clipPath: BUTTON_CLIP,
-                        background:
-                          selected === "no"
-                            ? "linear-gradient(155deg, rgba(220,220,220,0.25), rgba(10,10,10,0.95))"
-                            : "linear-gradient(155deg, rgba(255,255,255,0.06), rgba(10,10,10,0.95))",
+                        background: "linear-gradient(155deg, rgba(255,255,255,0.06), rgba(10,10,10,0.95))",
                       }}
                     />
+                    {/* Water fill */}
+                    {selected && (
+                      <span
+                        className="pointer-events-none absolute inset-y-0 left-0"
+                        style={{
+                          width: waterFilled ? `${currentPoll?.noPercent ?? 0}%` : "0%",
+                          transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                          background: "linear-gradient(to right, rgba(200,200,200,0.85), rgba(140,140,140,0.6))",
+                        }}
+                      >
+                        <span
+                          className="absolute inset-y-0 right-0 w-1.5 origin-right"
+                          style={{
+                            background: "rgba(230,230,230,0.95)",
+                            boxShadow: "0 0 10px 3px rgba(200,200,200,0.7)",
+                            animation: "water-edge-pulse 1s ease-in-out infinite",
+                          }}
+                        />
+                      </span>
+                    )}
                     <span className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide text-[#EBEBEB]">
                       No
                       {selected && (
@@ -372,12 +300,13 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                     </span>
                   </button>
 
-                  {/* Yes button */}
+                  {/* Yes button — water fills from the right */}
                   <button
                     type="button"
-                    onClick={() => { if (isDragging.current) { isDragging.current = false; return; } handleAnswer("yes"); }}
+                    disabled={!!selected}
+                    onClick={() => handleAnswer("yes")}
                     aria-label="Vote yes"
-                    className="group relative h-12 transition active:scale-95"
+                    className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
                     style={{ clipPath: BUTTON_CLIP }}
                   >
                     <span
@@ -391,12 +320,29 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                       className="absolute inset-[1.5px]"
                       style={{
                         clipPath: BUTTON_CLIP,
-                        background:
-                          selected === "yes"
-                            ? "linear-gradient(155deg, rgba(241,196,45,0.45), rgba(40,28,4,0.95))"
-                            : "linear-gradient(155deg, rgba(241,196,45,0.18), rgba(20,14,2,0.95))",
+                        background: "linear-gradient(155deg, rgba(241,196,45,0.18), rgba(20,14,2,0.95))",
                       }}
                     />
+                    {/* Water fill */}
+                    {selected && (
+                      <span
+                        className="pointer-events-none absolute inset-y-0 right-0"
+                        style={{
+                          width: waterFilled ? `${currentPoll?.yesPercent ?? 0}%` : "0%",
+                          transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                          background: "linear-gradient(to left, rgba(247,213,87,0.92), rgba(210,155,18,0.75))",
+                        }}
+                      >
+                        <span
+                          className="absolute inset-y-0 left-0 w-1.5 origin-left"
+                          style={{
+                            background: "rgba(255,236,120,0.95)",
+                            boxShadow: "0 0 10px 3px rgba(247,213,87,0.7)",
+                            animation: "water-edge-pulse 1s ease-in-out infinite",
+                          }}
+                        />
+                      </span>
+                    )}
                     <span className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide text-[#F1C42D]">
                       Yes
                       {selected && (
