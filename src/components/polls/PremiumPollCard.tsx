@@ -44,6 +44,7 @@ function getPercent(optionVotes: number, totalVotes: number, selected: boolean) 
 
 
 function AnimatedPercentage({ value, animate }: { value: number; animate: boolean }) {
+  const [displayValue, setDisplayValue] = useState(value);
     const [displayValue, setDisplayValue] = useState(value);
 
   useEffect(() => {
@@ -93,6 +94,22 @@ export function PremiumPollCard({
   const secondaryPercent = getPercent(secondaryVotes, totalVotes, secondarySelected);
 
   const voteLocked = useRef(false);
+  const [animateNumbers, setAnimateNumbers] = useState(false);
+  const [votePulse, setVotePulse] = useState(false);
+
+  useEffect(() => {
+    voteLocked.current = false;
+    setAnimateNumbers(false);
+    setVotePulse(false);
+  }, [question]);
+
+  useEffect(() => {
+    if (!selectedOptionId) return;
+    setAnimateNumbers(true);
+    setVotePulse(true);
+    const t = setTimeout(() => setVotePulse(false), 280);
+    return () => clearTimeout(t);
+  }, [selectedOptionId]);
 
   useEffect(() => {
     voteLocked.current = false;
@@ -172,6 +189,35 @@ export function PremiumPollCard({
                   themeHue={uniformNeutralTheme ? "neutral" : "primary"}
                   disabled={disabled}
                   onClick={() => submitVote(primaryOption.id)}
+                  className={cn(
+                    "relative min-h-[4rem] cursor-pointer overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg"
+                  )}
+                  style={{
+                    clipPath: BUTTON_CLIP,
+                    background: "linear-gradient(145deg, rgba(241,196,45,0.20), rgba(18,14,5,0.9))",
+                    border: "1px solid rgba(241,196,45,0.62)",
+                    boxShadow: primarySelected
+                      ? "inset 0 0 0 1px rgba(255,241,178,0.28), 0 0 28px rgba(241,196,45,0.75), 0 0 60px rgba(241,196,45,0.38)"
+                      : isAnswered
+                        ? "inset 0 0 0 1px rgba(255,241,178,0.06), 0 0 6px rgba(241,196,45,0.07)"
+                        : "inset 0 0 0 1px rgba(255,241,178,0.12), 0 0 18px rgba(241,196,45,0.17)",
+                    transition: "box-shadow 0.5s ease, transform 0.2s ease",
+                    transform: votePulse && primarySelected ? "scale(1.03)" : "scale(1)",
+                  }}
+                >
+                  <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
+                  <span
+                    className="relative z-10 flex flex-col items-center justify-center gap-1"
+                    style={{
+                      color: isAnswered ? (primarySelected ? "#FFFFFF" : "rgba(255,255,255,0.55)") : undefined,
+                      textShadow: primarySelected ? "0 0 10px rgba(241,196,45,1)" : undefined,
+                      transition: "color 0.4s ease",
+                    }}
+                  >
+                    {isAnswered && <AnimatedPercentage value={primaryPercent} animate={animateNumbers} />}
+                    {!isAnswered && <span>{primaryOption.label}</span>}
+                  </span>
+                </button>
                 />
 
                 {/* Secondary / No button */}
@@ -184,6 +230,36 @@ export function PremiumPollCard({
                   themeHue="neutral"
                   disabled={disabled}
                   onClick={() => submitVote(secondaryOption.id)}
+                  className={cn(
+                    "group relative min-h-[4rem] overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg"
+                  )}
+                  style={{
+                    clipPath: BUTTON_CLIP,
+                    background: "linear-gradient(145deg, rgba(235,235,235,0.08), rgba(12,12,12,0.92))",
+                    border: "1px solid rgba(217,217,217,0.34)",
+                    boxShadow: secondarySelected
+                      ? "inset 0 0 0 1px rgba(255,255,255,0.22), 0 0 28px rgba(210,210,210,0.65), 0 0 56px rgba(180,180,180,0.28)"
+                      : isAnswered
+                        ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
+                        : "inset 0 0 0 1px rgba(255,255,255,0.07)",
+                    transition: "box-shadow 0.5s ease, transform 0.2s ease",
+                    transform: votePulse && secondarySelected ? "scale(1.03)" : "scale(1)",
+                  }}
+                >
+                  <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" />
+                  <span
+                    className="relative z-10 flex flex-col items-center justify-center gap-1"
+                    style={{
+                      color: isAnswered ? (secondarySelected ? "#FFFFFF" : "rgba(255,255,255,0.55)") : undefined,
+                      textShadow: secondarySelected ? "0 0 10px rgba(255,255,255,0.9)" : undefined,
+                      transition: "color 0.4s ease",
+                    }}
+                  >
+                    {isAnswered && <AnimatedPercentage value={secondaryPercent} animate={animateNumbers} />}
+                    <span>{secondaryOption.label}</span>
+                  </span>
+                </button>
+              </div>
                 />
 </div>
             </div>
