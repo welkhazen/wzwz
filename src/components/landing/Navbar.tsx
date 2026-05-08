@@ -26,15 +26,12 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
     const onScroll = () => {
       const y = window.scrollY;
       if (y <= 10) {
-        // At the very top — always show
         if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
         setNavVisible(true);
       } else if (y < lastY) {
-        // Scrolling up — show immediately
         if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
         setNavVisible(true);
       } else if (y > lastY) {
-        // Scrolling down — hide after short delay to avoid flicker
         if (!hideTimer) {
           hideTimer = setTimeout(() => { setNavVisible(false); hideTimer = null; }, 150);
         }
