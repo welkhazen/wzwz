@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Children, cloneElement, isValidElement, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 type BrandNameProps = {
   className?: string;
@@ -25,11 +25,6 @@ export function highlightRawWordmark(content: ReactNode): ReactNode {
 
   if (Array.isArray(content)) {
     return content.map((child, index) => <span key={`node-${index}`}>{highlightRawWordmark(child)}</span>);
-  }
-
-  if (isValidElement(content)) {
-    const nextChildren = Children.map(content.props.children, (child) => highlightRawWordmark(child));
-    return cloneElement(content, undefined, nextChildren);
   }
 
   return content;
