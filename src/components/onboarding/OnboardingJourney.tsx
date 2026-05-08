@@ -12,9 +12,10 @@ import { fetchSupabasePolls, addPollComment } from "@/utils/supabasePolls";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { OnboardingPollCard } from "./OnboardingPollCard";
+import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
+import type { Comment } from "./PollComments";
 import { track } from "@/lib/analytics";
 
 type OnboardingPoll = {
@@ -191,7 +192,7 @@ export function OnboardingJourney({
     return toOnboardingPolls(polls);
   }, [supabasePolls, polls]);
   const [pollSelections, setPollSelections] = useState<Record<string, string>>({});
-  const [pollComments, setPollComments] = useState<Record<string, string[]>>({});
+  const [pollComments, setPollComments] = useState<Record<string, Comment[]>>({});
   const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [enterRawOpen, setEnterRawOpen] = useState(false);
@@ -407,21 +408,46 @@ export function OnboardingJourney({
                             exit={{ opacity: 0, scale: 0.94 }}
                             transition={{ duration: 0.18 }}
                           >
-                            <OnboardingPollCard
+                            <SwipeablePollCard
+                              id={currentPoll.id}
                               question={currentPoll.question}
                               options={currentPoll.options}
                               selectedOption={currentPollSelected}
+                              isAnswered={currentPollAnswered}
+                              totalResponses={Object.values(currentPollStats).reduce((a, b) => a + b, 0)}
                               responseStats={currentPollStats}
                               comments={pollComments[currentPoll.id] || []}
-                              onVote={(option) => {
+                              pollIndex={currentPollIndex}
+                              totalPolls={onboardingPolls.length}
+                              hideInternalNav
+                              onSwipe={(option) => {
                                 track("onboarding_poll_answered", { poll_id: currentPoll.id, option_id: option, step_index: currentPollIndex });
                                 setPollSelections((prev) => ({ ...prev, [currentPoll.id]: option }));
                                 onMarkPollAnswered(currentPoll.id);
                               }}
+                              onNavigate={(direction) => {
+                                if (direction === "left") {
+                                  setCurrentPollIndex((prev) => Math.max(0, prev - 1));
+                                } else {
+                                  setCurrentPollIndex((prev) => Math.min(onboardingPolls.length - 1, prev + 1));
+                                }
+                              }}
+                              currentIndex={currentPollIndex}
+                              completedCount={answeredCount}
                               onAddComment={(content) => {
+                                const newComment: Comment = {
+                                  id: `${currentPoll.id}-${Date.now()}`,
+                                  author: user.username,
+                                  avatar: avatarIndex,
+                                  content,
+                                  timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+                                  likes: 0,
+                                  replies: [],
+                                  isAnonymous: Math.random() > 0.7,
+                                };
                                 setPollComments((prev) => ({
                                   ...prev,
-                                  [currentPoll.id]: [...(prev[currentPoll.id] || []), content],
+                                  [currentPoll.id]: [...(prev[currentPoll.id] || []), newComment],
                                 }));
                                 addPollComment(currentPoll.id, content).catch((error) => {
                                   console.error("Failed to save onboarding comment to Supabase", error);
