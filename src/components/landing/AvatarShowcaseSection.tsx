@@ -31,11 +31,11 @@ export function AvatarShowcaseSection() {
   }
 
   function prevDesktop() {
-    setDesktopStart((i) => (i - 2 + AVATARS.length) % AVATARS.length);
+    setDesktopStart((i) => (i - 4 + AVATARS.length) % AVATARS.length);
   }
 
   function nextDesktop() {
-    setDesktopStart((i) => (i + 2) % AVATARS.length);
+    setDesktopStart((i) => (i + 4) % AVATARS.length);
   }
 
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
