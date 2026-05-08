@@ -32,7 +32,7 @@ function getPercent(optionVotes: number, totalVotes: number, selected: boolean) 
 
 
 function AnimatedPercentage({ value, animate }: { value: number; animate: boolean }) {
-  const [displayValue, setDisplayValue] = useState(animate ? 0 : value);
+    const [displayValue, setDisplayValue] = useState(value);
 
   useEffect(() => {
     if (!animate) {
