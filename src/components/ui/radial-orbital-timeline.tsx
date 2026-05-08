@@ -265,8 +265,8 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                     lineHeight: 1.3,
                     fontWeight: 700,
                     color: isLight
-                      ? (isExpanded ? "#5a4206" : "#6b4f07")
-                      : (isExpanded ? "#F1C42D" : "rgba(241,196,45,0.95)"),
+                      ? (isExpanded ? "#000000" : "rgba(0,0,0,0.75)")
+                      : (isExpanded ? "#F1C42D" : "rgba(255,255,255,0.85)"),
                     textShadow: isLight
                       ? "none"
                       : (isExpanded
