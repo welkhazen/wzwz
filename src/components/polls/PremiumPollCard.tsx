@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { HoverGradientVoteButton } from "@/components/polls/HoverGradientVoteButton";
 
 export interface PremiumPollOption {
   id: string;
@@ -14,6 +15,7 @@ interface PremiumPollCardProps {
   selectedOptionId?: string | null;
   disabled?: boolean;
   showHint?: boolean;
+  uniformNeutralTheme?: boolean;
   className?: string;
   onVote: (optionId: string) => void;
   onHintSeen?: () => void;
@@ -21,12 +23,12 @@ interface PremiumPollCardProps {
 
 const CARD_CLIP =
   "polygon(0 7%, 5.5% 0, 28% 0, 31% 1.4%, 69% 1.4%, 72% 0, 94.5% 0, 100% 7%, 100% 93%, 94.5% 100%, 5.5% 100%, 0 93%)";
-const BUTTON_CLIP = "polygon(10% 0, 90% 0, 100% 22%, 100% 78%, 90% 100%, 10% 100%, 0 78%, 0 22%)";
 
 function getPercent(optionVotes: number, totalVotes: number, selected: boolean) {
   if (totalVotes <= 0) return selected ? 100 : 0;
   return Math.round((optionVotes / totalVotes) * 100);
 }
+
 
 export function PremiumPollCard({
   question,
@@ -35,6 +37,7 @@ export function PremiumPollCard({
   selectedOptionId = null,
   disabled = false,
   showHint = false,
+  uniformNeutralTheme = false,
   className,
   onVote,
   onHintSeen,
@@ -50,19 +53,10 @@ export function PremiumPollCard({
   const secondaryPercent = getPercent(secondaryVotes, totalVotes, secondarySelected);
 
   const voteLocked = useRef(false);
-  const [waterFilled, setWaterFilled] = useState(false);
 
   useEffect(() => {
     voteLocked.current = false;
-    setWaterFilled(false);
-  }, [question, selectedOptionId]);
-
-  useEffect(() => {
-    if (isAnswered) {
-      const t = setTimeout(() => setWaterFilled(true), 60);
-      return () => clearTimeout(t);
-    }
-  }, [isAnswered]);
+  }, [question]);
 
   const submitVote = useCallback(
     (optionId: string) => {
@@ -75,10 +69,7 @@ export function PremiumPollCard({
   );
 
   return (
-    <article
-      className={cn("relative mx-auto w-full max-w-[22rem] select-none", className)}
-      aria-label={question}
-    >
+    <article className={cn("relative mx-auto w-full max-w-[22rem] select-none", className)} aria-label={question}>
       <div
         className="relative p-px shadow-[0_28px_70px_rgba(0,0,0,0.68),0_0_36px_rgba(241,196,45,0.14)]"
         style={{
@@ -122,9 +113,7 @@ export function PremiumPollCard({
             </div>
 
             {showHint && !isAnswered && (
-              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-raw-gold/75">
-                tap to vote
-              </p>
+              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-raw-gold/75">tap to vote</p>
             )}
 
             <h2 className="mt-4 flex min-h-[5.5rem] items-center text-center font-display text-[clamp(1rem,4.6vw,1.46rem)] leading-[1.4] text-[#dedede] [text-wrap:balance] sm:mt-5 sm:min-h-[7.75rem]">
@@ -134,95 +123,31 @@ export function PremiumPollCard({
             <div className="mt-auto w-full pt-4 sm:pt-5">
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {/* Primary / Yes button */}
-                <button
-                  type="button"
-                  disabled={disabled || isAnswered}
+                <HoverGradientVoteButton
+                  label={primaryOption.label}
+                  answered={isAnswered}
+                  selected={primarySelected}
+                  percent={primaryPercent}
+                  align="right"
+                  themeHue={uniformNeutralTheme ? "neutral" : "primary"}
+                  disabled={disabled}
                   onClick={() => submitVote(primaryOption.id)}
-                  className={cn(
-                    "relative min-h-[4rem] cursor-pointer overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
-                    primarySelected ? "text-black" : "text-raw-gold hover:text-[#ffe07a]",
-                    !primarySelected && isAnswered && "text-raw-gold/75"
-                  )}
-                  style={{
-                    clipPath: BUTTON_CLIP,
-                    background: "linear-gradient(145deg, rgba(241,196,45,0.20), rgba(18,14,5,0.9))",
-                    border: "1px solid rgba(241,196,45,0.62)",
-                    boxShadow: "inset 0 0 0 1px rgba(255,241,178,0.12), 0 0 18px rgba(241,196,45,0.17)",
-                  }}
-                >
-                  {/* Water fill — animates from the right edge inward */}
-                  {isAnswered && (
-                    <div
-                      className="pointer-events-none absolute inset-y-0 right-0"
-                      style={{
-                        width: waterFilled ? `${primaryPercent}%` : "0%",
-                        transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
-                        background: "linear-gradient(to left, rgba(247,213,87,0.92), rgba(210,155,18,0.75))",
-                      }}
-                    >
-                      {/* Leading-edge wave shimmer */}
-                      <div
-                        className="absolute inset-y-0 left-0 w-1.5 origin-left"
-                        style={{
-                          background: "rgba(255,236,120,0.95)",
-                          boxShadow: "0 0 10px 3px rgba(247,213,87,0.7)",
-                          animation: "water-edge-pulse 1s ease-in-out infinite",
-                        }}
-                      />
-                    </div>
-                  )}
-                  <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
-                  <span className="relative z-10 flex flex-col items-center justify-center gap-1">
-                    {isAnswered && <span className="text-xl font-semibold leading-none">{primaryPercent}%</span>}
-                    {!isAnswered && <span>{primaryOption.label}</span>}
-                  </span>
-                </button>
+                  showFill={false}
+                />
 
                 {/* Secondary / No button */}
-                <button
-                  type="button"
-                  disabled={disabled || isAnswered}
+                <HoverGradientVoteButton
+                  label={secondaryOption.label}
+                  answered={isAnswered}
+                  selected={secondarySelected}
+                  percent={secondaryPercent}
+                  align="left"
+                  themeHue="neutral"
+                  disabled={disabled}
                   onClick={() => submitVote(secondaryOption.id)}
-                  className={cn(
-                    "group relative min-h-[4rem] overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
-                    secondarySelected ? "text-black" : "text-[#d9d9d9] hover:border-raw-gold/50 hover:text-white",
-                    !secondarySelected && isAnswered && "text-raw-silver/72"
-                  )}
-                  style={{
-                    clipPath: BUTTON_CLIP,
-                    background: "linear-gradient(145deg, rgba(235,235,235,0.08), rgba(12,12,12,0.92))",
-                    border: "1px solid rgba(217,217,217,0.34)",
-                    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.07)",
-                  }}
-                >
-                  {/* Water fill — animates from the left edge inward */}
-                  {isAnswered && (
-                    <div
-                      className="pointer-events-none absolute inset-y-0 left-0"
-                      style={{
-                        width: waterFilled ? `${secondaryPercent}%` : "0%",
-                        transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
-                        background: "linear-gradient(to right, rgba(200,200,200,0.85), rgba(140,140,140,0.65))",
-                      }}
-                    >
-                      {/* Leading-edge wave shimmer */}
-                      <div
-                        className="absolute inset-y-0 right-0 w-1.5 origin-right"
-                        style={{
-                          background: "rgba(230,230,230,0.95)",
-                          boxShadow: "0 0 10px 3px rgba(200,200,200,0.7)",
-                          animation: "water-edge-pulse 1s ease-in-out infinite",
-                        }}
-                      />
-                    </div>
-                  )}
-                  <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" />
-                  <span className="relative z-10 flex flex-col items-center justify-center gap-1">
-                    {isAnswered && <span className="text-xl font-semibold leading-none">{secondaryPercent}%</span>}
-                    <span>{secondaryOption.label}</span>
-                  </span>
-                </button>
-              </div>
+                  showFill={false}
+                />
+</div>
             </div>
           </div>
         </div>

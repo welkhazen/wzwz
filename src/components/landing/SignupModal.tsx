@@ -58,26 +58,6 @@ function getPasswordStrength(password: string) {
   return { label: "Strong", tone: "text-emerald-300", checks };
 }
 
-const LAUNCH_DATE = new Date("2026-05-27T00:00:00Z");
-
-function useCountdown(target: Date) {
-  const [timeLeft, setTimeLeft] = useState(() => Math.max(0, target.getTime() - Date.now()));
-
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setTimeLeft(Math.max(0, target.getTime() - Date.now()));
-    }, 1000);
-    return () => window.clearInterval(interval);
-  }, [target]);
-
-  const totalSeconds = Math.floor(timeLeft / 1000);
-  return {
-    days: Math.floor(totalSeconds / 86400),
-    hours: Math.floor((totalSeconds % 86400) / 3600),
-    minutes: Math.floor((totalSeconds % 3600) / 60),
-    seconds: totalSeconds % 60,
-  };
-}
 
 export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupOtp, onLogin, source }: SignupModalProps) {
   const [username, setUsername] = useState("");
@@ -94,7 +74,6 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const openedFiredRef = useRef(false);
-  const countdown = useCountdown(LAUNCH_DATE);
 
   useEffect(() => {
     if (open && !openedFiredRef.current) {
@@ -360,25 +339,13 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
               </p>
             )}
 
-            {/* Countdown replaces the submit button until launch */}
-            <div className="mt-2 flex flex-col items-center gap-2 rounded-xl border border-raw-border/40 bg-raw-black/50 py-3">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-raw-silver/40">Sign-ups open in</p>
-              <div className="flex gap-2">
-                {[
-                  { value: countdown.days, label: "Days" },
-                  { value: countdown.hours, label: "Hours" },
-                  { value: countdown.minutes, label: "Min" },
-                  { value: countdown.seconds, label: "Sec" },
-                ].map(({ value, label }) => (
-                  <div key={label} className="flex flex-col items-center gap-1">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-raw-border/60 bg-raw-black/60 font-display text-xl text-raw-text tabular-nums">
-                      {String(value).padStart(2, "0")}
-                    </div>
-                    <span className="text-[9px] uppercase tracking-[0.12em] text-raw-silver/35">{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-2 w-full rounded-xl bg-raw-gold py-3 text-sm font-bold text-raw-ink transition-all hover:bg-raw-gold/90 hover:shadow-lg hover:shadow-raw-gold/20 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isSubmitting ? "Creating account..." : "Sign Up"}
+            </button>
           </form>
         ) : (
           <form onSubmit={handleLogin} className="space-y-4">

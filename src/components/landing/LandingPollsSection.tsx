@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTheme } from "@/providers/useTheme";
 import { ChevronLeft, ChevronRight, Send } from "lucide-react";
 import {
   motion,
@@ -98,6 +99,8 @@ function GoldIcosahedron({ className = "" }: { className?: string }) {
 }
 
 export function LandingPollsSection() {
+  const { mode } = useTheme();
+  const isLight = mode === "light";
   const sectionRef = useTrackSectionView("polls");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
@@ -173,6 +176,15 @@ export function LandingPollsSection() {
       // comment still shown locally
     }
   };
+
+  const [waterFilled, setWaterFilled] = useState(false);
+
+  useEffect(() => {
+    if (!selected) { setWaterFilled(false); return; }
+    setWaterFilled(false);
+    const t = setTimeout(() => setWaterFilled(true), 60);
+    return () => clearTimeout(t);
+  }, [selected]);
 
   const handleAnswer = useCallback(
     (choice: "yes" | "no") => {
@@ -319,7 +331,9 @@ export function LandingPollsSection() {
                   className="relative px-7 pt-7 pb-7"
                   style={{
                     clipPath: CARD_INNER_CLIP,
-                    background: "linear-gradient(165deg, #161616 0%, #0a0a0a 60%, #050505 100%)",
+                    background: isLight
+                      ? "linear-gradient(165deg, #fffdf5 0%, #fdf8e8 60%, #faf4d8 100%)"
+                      : "linear-gradient(165deg, #161616 0%, #0a0a0a 60%, #050505 100%)",
                   }}
                 >
                   {/* Corner accents */}
@@ -334,13 +348,14 @@ export function LandingPollsSection() {
                     <GoldIcosahedron className="mb-5 h-20 w-20" />
 
                     <p className="text-[11px] font-bold uppercase tracking-[0.36em] text-[#F1C42D] [text-shadow:0_0_8px_rgba(241,196,45,0.45)]">
-                      Poll Question
+                      Instantly See What Everyone Else Thinks.
                     </p>
 
                     <p
-                      className="mt-5 font-display text-[26px] font-medium leading-[1.18] tracking-wide text-[#EBEBEB]"
+                      className="mt-5 font-display text-[26px] font-medium leading-[1.18] tracking-wide"
                       style={{
                         fontFamily: 'var(--font-display, "Orbitron", "Inter", system-ui, sans-serif)',
+                        color: isLight ? "#1a1a1a" : "#EBEBEB",
                       }}
                     >
                       {currentPoll?.question}
@@ -348,22 +363,18 @@ export function LandingPollsSection() {
 
                     <div className="mt-6 h-px w-16 bg-white/20" />
 
-                    <p className="mt-4 text-[11px] tracking-[0.05em] text-white/45">
-                      {selected
-                        ? `You answered: ${selected.toUpperCase()}`
-                        : "Swipe right for Yes · left for No"}
-                    </p>
 
                     <div className="mt-5 grid w-full grid-cols-2 gap-3">
                       {/* No button */}
                       <button
                         type="button"
+                        disabled={!!selected}
                         onClick={() => {
                           if (isDragging.current) { isDragging.current = false; return; }
                           handleAnswer("no");
                         }}
                         aria-label="Vote no"
-                        className="group relative h-12 transition active:scale-95"
+                        className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
                         style={{ clipPath: BUTTON_CLIP }}
                       >
                         <span
@@ -374,13 +385,38 @@ export function LandingPollsSection() {
                           className="absolute inset-[1.5px]"
                           style={{
                             clipPath: BUTTON_CLIP,
-                            background:
-                              selected === "no"
-                                ? "linear-gradient(155deg, rgba(220,220,220,0.25), rgba(10,10,10,0.95))"
-                                : "linear-gradient(155deg, rgba(255,255,255,0.06), rgba(10,10,10,0.95))",
+                            background: "linear-gradient(155deg, rgba(255,255,255,0.06), rgba(10,10,10,0.95))",
                           }}
                         />
-                        <span className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide text-[#EBEBEB]">
+                        {selected && (
+                          <div
+                            className="pointer-events-none absolute inset-y-0 left-0"
+                            style={{
+                              width: waterFilled ? `${currentPoll?.noPercent}%` : "0%",
+                              transition: waterFilled ? "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+                              background: "linear-gradient(to right, rgba(200,200,200,0.85), rgba(140,140,140,0.65))",
+                            }}
+                          >
+                            {selected === "no" && (
+                              <div
+                                className="absolute inset-y-0 right-0 w-1.5 origin-right"
+                                style={{
+                                  background: "rgba(230,230,230,0.95)",
+                                  boxShadow: "0 0 10px 3px rgba(200,200,200,0.7)",
+                                  animation: "water-edge-pulse 1s ease-in-out infinite",
+                                }}
+                              />
+                            )}
+                          </div>
+                        )}
+                        <span
+                          className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide"
+                          style={{
+                            color: selected ? (selected === "no" ? "#FFFFFF" : "rgba(255,255,255,0.55)") : "#EBEBEB",
+                            textShadow: selected === "no" ? "0 0 10px rgba(255,255,255,0.9)" : undefined,
+                            transition: "color 0.4s ease",
+                          }}
+                        >
                           No
                           {selected && (
                             <span className="text-sm font-bold opacity-90">{currentPoll?.noPercent}%</span>
@@ -391,12 +427,13 @@ export function LandingPollsSection() {
                       {/* Yes button */}
                       <button
                         type="button"
+                        disabled={!!selected}
                         onClick={() => {
                           if (isDragging.current) { isDragging.current = false; return; }
                           handleAnswer("yes");
                         }}
                         aria-label="Vote yes"
-                        className="group relative h-12 transition active:scale-95"
+                        className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
                         style={{ clipPath: BUTTON_CLIP }}
                       >
                         <span
@@ -407,13 +444,38 @@ export function LandingPollsSection() {
                           className="absolute inset-[1.5px]"
                           style={{
                             clipPath: BUTTON_CLIP,
-                            background:
-                              selected === "yes"
-                                ? "linear-gradient(155deg, rgba(241,196,45,0.45), rgba(40,28,4,0.95))"
-                                : "linear-gradient(155deg, rgba(241,196,45,0.18), rgba(20,14,2,0.95))",
+                            background: "linear-gradient(155deg, rgba(241,196,45,0.18), rgba(20,14,2,0.95))",
                           }}
                         />
-                        <span className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide text-[#F1C42D]">
+                        {selected && (
+                          <div
+                            className="pointer-events-none absolute inset-y-0 right-0"
+                            style={{
+                              width: waterFilled ? `${currentPoll?.yesPercent}%` : "0%",
+                              transition: waterFilled ? "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+                              background: "linear-gradient(to left, rgba(247,213,87,0.92), rgba(210,155,18,0.75))",
+                            }}
+                          >
+                            {selected === "yes" && (
+                              <div
+                                className="absolute inset-y-0 left-0 w-1.5 origin-left"
+                                style={{
+                                  background: "rgba(255,236,120,0.95)",
+                                  boxShadow: "0 0 10px 3px rgba(247,213,87,0.7)",
+                                  animation: "water-edge-pulse 1s ease-in-out infinite",
+                                }}
+                              />
+                            )}
+                          </div>
+                        )}
+                        <span
+                          className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide"
+                          style={{
+                            color: selected ? (selected === "yes" ? "#FFFFFF" : "rgba(255,255,255,0.55)") : "#F1C42D",
+                            textShadow: selected === "yes" ? "0 0 10px rgba(241,196,45,1)" : undefined,
+                            transition: "color 0.4s ease",
+                          }}
+                        >
                           Yes
                           {selected && (
                             <span className="text-sm font-bold opacity-90">{currentPoll?.yesPercent}%</span>
@@ -444,61 +506,81 @@ export function LandingPollsSection() {
           </button>
         </div>
 
-        {/* Comments panel — same as PollShowcase */}
-        <div className="mt-4 w-full max-w-[330px] mx-auto" style={{ minHeight: 130 }}>
-          {showComments && (
-            <div
-              className="p-[1px]"
-              style={{
-                clipPath: COMMENT_CLIP,
-                background:
-                  "linear-gradient(160deg, rgba(241,196,45,0.4) 0%, rgba(241,196,45,0.1) 50%, rgba(241,196,45,0.3) 100%)",
-              }}
-            >
-              <div
-                className="px-4 py-4"
-                style={{
-                  clipPath: COMMENT_CLIP,
-                  background: "linear-gradient(165deg, #131313 0%, #080808 100%)",
-                }}
+        {/* Comments — drops down attached to card */}
+        <div className="w-full max-w-[330px] mx-auto">
+          <AnimatePresence>
+            {showComments && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                className="overflow-hidden"
               >
-                <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#F1C42D]/70 mb-3">
-                  Anonymous Comments
-                </p>
+                {/* Gold connector line + glow sweep */}
+                <motion.div
+                  initial={{ scaleX: 0, opacity: 0 }}
+                  animate={{ scaleX: 1, opacity: 1 }}
+                  transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
+                  className="h-px origin-left bg-gradient-to-r from-transparent via-[#F1C42D]/55 to-transparent"
+                  style={{ boxShadow: "0 0 8px rgba(241,196,45,0.4)" }}
+                />
 
-                <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                  {allComments.map((c, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-[#F1C42D]/15 flex items-center justify-center text-[9px] text-[#F1C42D]/60 font-bold">
-                        ?
-                      </span>
-                      <p className="text-[12px] text-white/60 leading-[1.4]">{c}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-3 flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add anonymous comment…"
-                    value={commentInputs[index] ?? ""}
-                    onChange={(e) =>
-                      setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
-                    }
-                    onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
-                    className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-1.5 text-[12px] text-white/70 placeholder:text-white/25 outline-none focus:border-[#F1C42D]/40 transition"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSubmitComment}
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
+                <div
+                  className="p-[1px]"
+                  style={{
+                    clipPath: COMMENT_CLIP,
+                    background:
+                      "linear-gradient(160deg, rgba(241,196,45,0.35) 0%, rgba(241,196,45,0.08) 50%, rgba(241,196,45,0.25) 100%)",
+                    boxShadow: "0 8px 32px rgba(241,196,45,0.1)",
+                  }}
+                >
+                  <div
+                    className="px-4 py-4"
+                    style={{
+                      clipPath: COMMENT_CLIP,
+                      background: "linear-gradient(165deg, #111111 0%, #070707 100%)",
+                    }}
                   >
-                    <Send className="h-3.5 w-3.5" />
-                  </button>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#F1C42D]/60 mb-3">
+                      Anonymous Comments
+                    </p>
+
+                    <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                      {allComments.map((c, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-[#F1C42D]/12 flex items-center justify-center text-[9px] text-[#F1C42D]/55 font-bold">
+                            ?
+                          </span>
+                          <p className="text-[12px] text-white/55 leading-[1.4]">{c}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Add anonymous comment…"
+                        value={commentInputs[index] ?? ""}
+                        onChange={(e) =>
+                          setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
+                        }
+                        onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
+                        className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-1.5 text-[12px] text-white/70 placeholder:text-white/25 outline-none focus:border-[#F1C42D]/40 transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSubmitComment}
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </LandingSectionShell>
