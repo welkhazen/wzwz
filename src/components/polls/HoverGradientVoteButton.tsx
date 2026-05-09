@@ -12,6 +12,8 @@ interface HoverGradientVoteButtonProps {
   onClick: () => void;
 }
 
+const RESULT_ANIMATION_DURATION_MS = 800;
+
 export function HoverGradientVoteButton({
   label,
   percent,
@@ -23,13 +25,39 @@ export function HoverGradientVoteButton({
   onClick,
 }: HoverGradientVoteButtonProps) {
   const [waterFilled, setWaterFilled] = useState(false);
+  const [displayedPercent, setDisplayedPercent] = useState(0);
 
   useEffect(() => {
-    if (!answered) { setWaterFilled(false); return; }
+    if (!answered) {
+      setWaterFilled(false);
+      setDisplayedPercent(0);
+      return;
+    }
+
     setWaterFilled(false);
-    const t = setTimeout(() => setWaterFilled(true), 60);
-    return () => clearTimeout(t);
-  }, [answered]);
+    const fillTimer = setTimeout(() => setWaterFilled(true), 60);
+
+    const targetPercent = Math.max(0, Math.min(100, percent ?? 0));
+    let animationFrame = 0;
+    const startedAt = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - startedAt;
+      const progress = Math.min(1, elapsed / RESULT_ANIMATION_DURATION_MS);
+      setDisplayedPercent(Math.round(targetPercent * progress));
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(tick);
+      }
+    };
+
+    setDisplayedPercent(0);
+    animationFrame = requestAnimationFrame(tick);
+
+    return () => {
+      clearTimeout(fillTimer);
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [answered, percent]);
 
   const isPrimary = themeHue === "primary";
   const borderGradient = isPrimary
@@ -71,7 +99,7 @@ export function HoverGradientVoteButton({
             style={{
               width: waterFilled ? `${percent ?? 0}%` : "0%",
               background: fillGradient,
-              transition: waterFilled ? "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+              transition: waterFilled ? `width ${RESULT_ANIMATION_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)` : "none",
             }}
           />
         )}
@@ -82,7 +110,7 @@ export function HoverGradientVoteButton({
             opacity: answered && !selected ? 0.7 : 1,
           }}
         >
-          {answered ? <span className="text-xl font-semibold leading-none">{percent ?? 0}%</span> : null}
+          {answered ? <span className="text-xl font-semibold leading-none">{displayedPercent}%</span> : null}
           <span>{label}</span>
         </span>
       </span>
