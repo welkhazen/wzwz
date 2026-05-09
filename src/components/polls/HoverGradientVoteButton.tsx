@@ -11,6 +11,7 @@ interface HoverGradientVoteButtonProps {
   align?: "left" | "right";
   themeHue?: "primary" | "neutral";
   onClick: () => void;
+  showFill?: boolean;
 }
 
 const RESULT_ANIMATION_DURATION_MS = 800;
@@ -24,6 +25,7 @@ export function HoverGradientVoteButton({
   align = "right",
   themeHue = "primary",
   onClick,
+  showFill = true,
 }: HoverGradientVoteButtonProps) {
   const [waterFilled, setWaterFilled] = useState(false);
   const [displayedPercent, setDisplayedPercent] = useState(0);
@@ -91,7 +93,7 @@ export function HoverGradientVoteButton({
     >
       <span className="absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" />
       <span className="relative block h-full w-full rounded-[calc(1rem-1.5px)] bg-black/85 px-2 py-2.5 sm:px-3 sm:py-3">
-        {answered && (
+        {answered && showFill && (
           <span
             className={cn(
               "pointer-events-none absolute inset-y-0",

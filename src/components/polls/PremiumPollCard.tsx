@@ -21,18 +21,6 @@ interface PremiumPollCardProps {
   onHintSeen?: () => void;
 }
 
-interface VoteButtonProps {
-  label: string;
-  answered: boolean;
-  selected: boolean;
-  percent: number;
-  disabled: boolean;
-  pulse: boolean;
-  tone: "primary" | "neutral";
-  onClick: () => void;
-  animateNumbers: boolean;
-}
-
 const CARD_CLIP =
   "polygon(0 7%, 5.5% 0, 28% 0, 31% 1.4%, 69% 1.4%, 72% 0, 94.5% 0, 100% 7%, 100% 93%, 94.5% 100%, 5.5% 100%, 0 93%)";
 
@@ -42,34 +30,6 @@ function getPercent(optionVotes: number, totalVotes: number, selected: boolean) 
 }
 
 
-
-function AnimatedPercentage({ value, animate }: { value: number; animate: boolean }) {
-    const [displayValue, setDisplayValue] = useState(value);
-
-  useEffect(() => {
-    if (!animate) {
-      setDisplayValue(value);
-      return;
-    }
-
-    let frame = 0;
-    const durationMs = 800;
-    const start = performance.now();
-
-    const tick = (now: number) => {
-      const elapsed = Math.min(now - start, durationMs);
-      const progress = elapsed / durationMs;
-      const eased = 1 - (1 - progress) ** 3;
-      setDisplayValue(Math.round(value * eased));
-      if (progress < 1) frame = requestAnimationFrame(tick);
-    };
-
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [animate, value]);
-
-  return <span className="text-xl font-semibold leading-none">{displayValue}%</span>;
-}
 export function PremiumPollCard({
   question,
   primaryOption,
@@ -172,6 +132,7 @@ export function PremiumPollCard({
                   themeHue={uniformNeutralTheme ? "neutral" : "primary"}
                   disabled={disabled}
                   onClick={() => submitVote(primaryOption.id)}
+                  showFill={false}
                 />
 
                 {/* Secondary / No button */}
@@ -184,6 +145,7 @@ export function PremiumPollCard({
                   themeHue="neutral"
                   disabled={disabled}
                   onClick={() => submitVote(secondaryOption.id)}
+                  showFill={false}
                 />
 </div>
             </div>
