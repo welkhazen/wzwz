@@ -4,6 +4,7 @@ import { Menu, X, Moon, Sun } from "lucide-react";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 import { track } from "@/lib/analytics";
 import { useTheme } from "@/providers/useTheme";
+import { THEME_MODE_LABELS, THEME_MODE_ORDER } from "@/providers/theme-context";
 
 const RAW_LOGO_SRC = "/raw-logo-96.png";
 
@@ -16,7 +17,7 @@ interface NavbarProps {
 export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { mode, setMode } = useTheme();
-  const isLightMode = mode === "light";
+  const modeIndex = THEME_MODE_ORDER.indexOf(mode);
   const [navVisible, setNavVisible] = useState(true);
 
   useEffect(() => {
@@ -107,28 +108,21 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
             </div>
           ) : (
             <>
-              <button
-                onClick={() => setMode(isLightMode ? "dark" : "light")}
-                aria-label="Toggle light and dark mode"
-                className={`relative flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-300 ${
-                  isLightMode
-                    ? "border-slate-300 bg-slate-200"
-                    : "border-raw-border/40 bg-raw-surface/60"
-                }`}
-              >
-                <span
-                  className={`absolute flex h-5 w-5 items-center justify-center rounded-full shadow transition-transform duration-300 ${
-                    isLightMode
-                      ? "translate-x-8 bg-white"
-                      : "translate-x-1 bg-slate-600"
-                  }`}
-                >
-                  {isLightMode
-                    ? <Sun className="h-3 w-3 text-amber-500" />
-                    : <Moon className="h-3 w-3 text-slate-300" />
-                  }
-                </span>
-              </button>
+              <div className="flex items-center gap-2 rounded-full border border-raw-border/40 bg-raw-surface/50 px-2 py-1">
+                <Moon className="h-3.5 w-3.5 text-raw-silver/60" />
+                <input
+                  type="range"
+                  min={0}
+                  max={3}
+                  step={1}
+                  value={modeIndex}
+                  onChange={(e) => setMode(THEME_MODE_ORDER[Number(e.target.value)] ?? "dark")}
+                  aria-label="Theme mode swiper"
+                  className="h-1.5 w-20 cursor-pointer accent-[rgb(var(--raw-accent))]"
+                />
+                <Sun className="h-3.5 w-3.5 text-raw-silver/60" />
+                <span className="min-w-10 text-[10px] uppercase tracking-[0.12em] text-raw-silver/65">{THEME_MODE_LABELS[mode]}</span>
+              </div>
               <ThemeCustomizer placement="inline" triggerStyle="compact" className="flex shrink-0" />
               <button
                 onClick={handleSignupClick}
