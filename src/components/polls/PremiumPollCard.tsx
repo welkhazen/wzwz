@@ -21,18 +21,6 @@ interface PremiumPollCardProps {
   onHintSeen?: () => void;
 }
 
-interface VoteButtonProps {
-  label: string;
-  answered: boolean;
-  selected: boolean;
-  percent: number;
-  disabled: boolean;
-  pulse: boolean;
-  tone: "primary" | "neutral";
-  onClick: () => void;
-  animateNumbers: boolean;
-}
-
 const CARD_CLIP =
   "polygon(0 7%, 5.5% 0, 28% 0, 31% 1.4%, 69% 1.4%, 72% 0, 94.5% 0, 100% 7%, 100% 93%, 94.5% 100%, 5.5% 100%, 0 93%)";
 
@@ -128,7 +116,10 @@ export function PremiumPollCard({
   );
 
   return (
-    <article className={cn("relative mx-auto w-full max-w-[22rem] select-none", className)} aria-label={question}>
+    <article
+      className={cn("relative mx-auto w-full max-w-[22rem] select-none", className)}
+      aria-label={question}
+    >
       <div
         className="relative p-px shadow-[0_28px_70px_rgba(0,0,0,0.68),0_0_36px_rgba(241,196,45,0.14)]"
         style={{
@@ -172,7 +163,9 @@ export function PremiumPollCard({
             </div>
 
             {showHint && !isAnswered && (
-              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-raw-gold/75">tap to vote</p>
+              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-raw-gold/75">
+                tap to vote
+              </p>
             )}
 
             <h2 className="mt-4 flex min-h-[5.5rem] items-center text-center font-display text-[clamp(1rem,4.6vw,1.46rem)] leading-[1.4] text-[#dedede] [text-wrap:balance] sm:mt-5 sm:min-h-[7.75rem]">
