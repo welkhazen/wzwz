@@ -307,14 +307,8 @@ export function OnboardingJourney({
                           aria-label={`Select ${avatar.name}`}
                           aria-pressed={isActive}
                         >
-                          {isActive && (
-                            <div
-                              className="absolute -inset-1 rounded-full opacity-50 blur-md pointer-events-none"
-                              style={{ background: avatar.ring }}
-                            />
-                          )}
                           <div className={`relative rounded-full transition-all duration-300 ${
-                            isActive ? "scale-115" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
+                            isActive ? "scale-110" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                           }`}>
                             <AvatarFigure avatarIndex={index} size="sm" selected={isActive} className="sm:hidden" />
                             <AvatarFigure avatarIndex={index} size="md" selected={isActive} className="hidden sm:block" />
