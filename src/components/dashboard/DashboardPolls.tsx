@@ -54,14 +54,6 @@ interface PollHistoryComment {
   author: string;
   content: string;
   createdAt: string;
-  replies?: PollHistoryReply[];
-}
-
-interface PollHistoryReply {
-  id: string;
-  author: string;
-  content: string;
-  createdAt: string;
 }
 
 interface DashboardPollsProps {
@@ -121,9 +113,7 @@ export function DashboardPolls({
   const [answerHistory, setAnswerHistory] = useState<Record<string, string>>({});
   const [historyComments, setHistoryComments] = useState<Record<string, PollHistoryComment[]>>({});
   const [commentDraft, setCommentDraft] = useState("");
-  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
-  const [showAllComments, setShowAllComments] = useState(false);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
 
   useEffect(() => {
@@ -336,42 +326,6 @@ export function DashboardPolls({
     handleCommentAdd();
   };
 
-  const handleReplyAdd = (commentId: string) => {
-    if (!currentPoll) return;
-
-    const content = (replyDrafts[commentId] ?? "").trim();
-    if (!content) return;
-
-    const nextReply: PollHistoryReply = {
-      id: `${commentId}-reply-${Date.now()}`,
-      author: username,
-      content,
-      createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setHistoryComments((previous) => ({
-      ...previous,
-      [currentPoll.id]: (previous[currentPoll.id] ?? []).map((comment) =>
-        comment.id === commentId
-          ? {
-              ...comment,
-              replies: [...(comment.replies ?? []), nextReply],
-            }
-          : comment
-      ),
-    }));
-
-    setReplyDrafts((previous) => ({
-      ...previous,
-      [commentId]: "",
-    }));
-  };
-
-  const handleReplyKeyDown = (event: React.KeyboardEvent<HTMLInputElement>, commentId: string) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    handleReplyAdd(commentId);
-  };
 
   if (!currentPoll) {
     return (
@@ -516,73 +470,21 @@ export function DashboardPolls({
               </button>
             </form>
 
-            <div className="mt-4 flex flex-col gap-2.5">
+            <div className="mt-4 max-h-64 overflow-y-auto flex flex-col gap-2.5 pr-1">
               {currentComments.length === 0 ? (
                 <p className={`text-center text-xs ${isLightMode ? "text-slate-500" : "text-raw-silver/45"}`}>
                   No comments yet. Be the first.
                 </p>
               ) : (
-                (showAllComments ? currentComments : currentComments.slice(0, 3)).map((comment) => (
+                currentComments.map((comment) => (
                   <article key={comment.id} className="border border-raw-border/35 bg-raw-black/50 px-3.5 py-2.5">
                     <div className="flex items-center justify-between text-[11px] text-raw-silver/50">
                       <span>@{comment.author}</span>
                       <span>{comment.createdAt}</span>
                     </div>
                     <p className="mt-1 text-sm text-raw-silver/85">{comment.content}</p>
-
-                    <div className="mt-2 flex flex-col gap-1.5">
-                      {(comment.replies ?? []).slice(-2).map((reply) => (
-                        <div key={reply.id} className="border border-raw-border/35 bg-raw-black/30 px-3 py-2">
-                          <div className="flex items-center justify-between text-[10px] text-raw-silver/45">
-                            <span>@{reply.author}</span>
-                            <span>{reply.createdAt}</span>
-                          </div>
-                          <p className="mt-0.5 text-xs text-raw-silver/80">{reply.content}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <form
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        handleReplyAdd(comment.id);
-                      }}
-                      className="mt-2 flex items-center gap-2 rounded-full border border-raw-border/35 bg-raw-black/30 px-3 py-1.5"
-                    >
-                      <input
-                        value={replyDrafts[comment.id] ?? ""}
-                        onChange={(event) =>
-                          setReplyDrafts((previous) => ({
-                            ...previous,
-                            [comment.id]: event.target.value,
-                          }))
-                        }
-                        onKeyDown={(event) => handleReplyKeyDown(event, comment.id)}
-                        placeholder="Reply..."
-                        className="flex-1 bg-transparent text-xs text-raw-text placeholder:text-raw-silver/35 focus:outline-none"
-                      />
-                      <button
-                        type="submit"
-                        disabled={!(replyDrafts[comment.id] ?? "").trim()}
-                        className="rounded-full border border-raw-border/40 px-2 py-0.5 text-[10px] text-raw-silver/80 hover:bg-raw-surface/40 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        Reply
-                      </button>
-                    </form>
                   </article>
                 ))
-              )}
-              {currentComments.length > 3 && (
-                <button
-                  onClick={() => setShowAllComments((prev) => !prev)}
-                  className={`w-full border py-2 text-xs font-medium transition ${
-                    isLightMode
-                      ? "border-slate-200 text-slate-500 hover:bg-slate-100"
-                      : "border-raw-border/35 text-raw-silver/55 hover:bg-raw-surface/20"
-                  }`}
-                >
-                  {showAllComments ? "Show less" : `Show ${currentComments.length - 3} more comment${currentComments.length - 3 === 1 ? "" : "s"}`}
-                </button>
               )}
             </div>
           </div>
