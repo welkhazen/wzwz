@@ -1,5 +1,6 @@
 import type React from "react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { Sparkles, Zap, Crown, X } from "lucide-react";
 import { GlareCard } from "@/components/ui/glare-card";
@@ -88,10 +89,10 @@ const insights: InsightDetail[] = [
 ];
 
 // SVG radar chart — pure, no library
-function RadarChart({ traits, color }: { traits: Trait[]; color: string }) {
-  const cx = 110;
-  const cy = 110;
-  const r = 85;
+function RadarChart({ traits, color, isLight }: { traits: Trait[]; color: string; isLight: boolean }) {
+  const cx = 140;
+  const cy = 130;
+  const r = 80;
   const n = traits.length;
 
   const angleOf = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2;
@@ -105,63 +106,26 @@ function RadarChart({ traits, color }: { traits: Trait[]; color: string }) {
   };
 
   const gridLevels = [0.25, 0.5, 0.75, 1];
-
   const axisPoints = traits.map((_, i) => pointAt(i, 1));
   const dataPoints = traits.map((t, i) => pointAt(i, t.value / 100));
-
-  const polygonPoints = (pts: { x: number; y: number }[]) =>
-    pts.map((p) => `${p.x},${p.y}`).join(" ");
+  const toPoints = (pts: { x: number; y: number }[]) => pts.map((p) => `${p.x},${p.y}`).join(" ");
+  const gridStroke = isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.08)";
+  const axisStroke = isLight ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.1)";
+  const labelFill = isLight ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.55)";
 
   return (
-    <svg viewBox="0 0 220 220" className="w-full max-w-[240px] mx-auto">
-      {/* Grid polygons */}
-      {gridLevels.map((lvl) => {
-        const pts = traits.map((_, i) => pointAt(i, lvl));
-        return (
-          <polygon
-            key={lvl}
-            points={polygonPoints(pts)}
-            fill="none"
-            stroke="rgba(255,255,255,0.08)"
-            strokeWidth="1"
-          />
-        );
-      })}
-
-      {/* Axis lines */}
-      {axisPoints.map((p, i) => (
-        <line
-          key={i}
-          x1={cx}
-          y1={cy}
-          x2={p.x}
-          y2={p.y}
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth="1"
-        />
+    <svg viewBox="0 0 280 260" className="w-full max-w-[280px] mx-auto">
+      {gridLevels.map((lvl) => (
+        <polygon key={lvl} points={toPoints(traits.map((_, i) => pointAt(i, lvl)))} fill="none" stroke={gridStroke} strokeWidth="1" />
       ))}
-
-      {/* Data polygon */}
-      <polygon
-        points={polygonPoints(dataPoints)}
-        fill={color}
-        stroke={color.replace("0.55", "0.9")}
-        strokeWidth="1.5"
-      />
-
-      {/* Axis labels */}
+      {axisPoints.map((p, i) => (
+        <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke={axisStroke} strokeWidth="1" />
+      ))}
+      <polygon points={toPoints(dataPoints)} fill={color} stroke={color.replace("0.55", "0.9")} strokeWidth="1.5" />
       {traits.map((t, i) => {
-        const p = pointAt(i, 1.22);
+        const p = pointAt(i, 1.28);
         return (
-          <text
-            key={i}
-            x={p.x}
-            y={p.y}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize="8"
-            fill="rgba(255,255,255,0.55)"
-          >
+          <text key={i} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill={labelFill}>
             {t.label}
           </text>
         );
@@ -170,58 +134,63 @@ function RadarChart({ traits, color }: { traits: Trait[]; color: string }) {
   );
 }
 
-function InsightModal({ insight, onClose }: { insight: InsightDetail; onClose: () => void }) {
+function InsightModal({ insight, onClose, isLight }: { insight: InsightDetail; onClose: () => void; isLight: boolean }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
 
       <div
-        className="relative z-10 w-full max-w-sm rounded-2xl border border-white/10 bg-[#0e0e0e] p-6 shadow-2xl overflow-y-auto max-h-[90vh]"
+        className={`relative z-10 w-full max-w-sm rounded-2xl border p-6 shadow-2xl overflow-y-auto max-h-[90vh] ${
+          isLight ? "border-black/10 bg-white text-stone-900" : "border-white/10 bg-[#0e0e0e] text-white"
+        }`}
         onClick={(e) => e.stopPropagation()}
-        style={{ boxShadow: `0 0 60px ${insight.accentColor}22` }}
+        style={{ boxShadow: `0 0 60px ${insight.accentColor}33, 0 24px 64px rgba(0,0,0,0.6)` }}
       >
         {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">{insight.badge}</p>
-            <h3 className="text-lg font-bold text-white leading-tight">{insight.name}</h3>
+            <p className={`text-[10px] uppercase tracking-[0.2em] mb-1 ${isLight ? "text-stone-400" : "text-white/30"}`}>{insight.badge}</p>
+            <h3 className={`text-lg font-bold leading-tight ${isLight ? "text-stone-900" : "text-white"}`}>{insight.name}</h3>
           </div>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/5 text-white/40 hover:text-white transition ml-3 mt-0.5"
+            className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition ml-3 mt-0.5 ${
+              isLight ? "bg-black/5 text-stone-400 hover:text-stone-800" : "bg-white/5 text-white/40 hover:text-white"
+            }`}
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Radar */}
-        <RadarChart traits={insight.traits} color={insight.radarColor} />
+        <RadarChart traits={insight.traits} color={insight.radarColor} isLight={isLight} />
 
         {/* Traits */}
         <div className="mt-5 space-y-4">
-          <p className="text-xs font-bold text-white/80 uppercase tracking-[0.15em]">Trait Breakdown</p>
+          <p className={`text-xs font-bold uppercase tracking-[0.15em] ${isLight ? "text-stone-500" : "text-white/80"}`}>Trait Breakdown</p>
           {insight.traits.map((trait) => (
             <div key={trait.label}>
               <div className="flex justify-between items-baseline mb-1">
-                <span className="text-sm font-semibold text-white">{trait.label}</span>
+                <span className={`text-sm font-semibold ${isLight ? "text-stone-800" : "text-white"}`}>{trait.label}</span>
                 <span className="text-sm font-bold" style={{ color: insight.accentColor }}>{trait.value}%</span>
               </div>
-              <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
+              <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLight ? "bg-black/8" : "bg-white/5"}`}>
                 <div
                   className="h-full rounded-full transition-all duration-700"
                   style={{ width: `${trait.value}%`, backgroundColor: insight.accentColor }}
                 />
               </div>
-              <p className="mt-1 text-[11px] text-white/35">{trait.description}</p>
+              <p className={`mt-1 text-[11px] ${isLight ? "text-stone-400" : "text-white/35"}`}>{trait.description}</p>
             </div>
           ))}
         </div>
 
-        <p className="mt-6 text-center text-[10px] text-white/20">
+        <p className={`mt-6 text-center text-[10px] ${isLight ? "text-stone-300" : "text-white/20"}`}>
           Sample data · your real profile unlocks with raW membership
         </p>
       </div>
@@ -303,8 +272,9 @@ export function PersonalityInsightsSection() {
         </p>
       </div>
 
-      {openInsight && (
-        <InsightModal insight={openInsight} onClose={() => setOpenInsight(null)} />
+      {openInsight && createPortal(
+        <InsightModal insight={openInsight} onClose={() => setOpenInsight(null)} isLight={isLight} />,
+        document.body,
       )}
     </section>
   );
