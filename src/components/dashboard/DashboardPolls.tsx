@@ -444,6 +444,26 @@ export function DashboardPolls({
             <div className="mb-2 flex items-center justify-between">
               <p className={`text-[11px] uppercase tracking-[0.12em] ${isLightMode ? "text-slate-600" : "text-raw-silver/55"}`}>COMMENTS</p>
             </div>
+
+            <div className="mb-3 max-h-64 overflow-y-auto flex flex-col gap-2.5 pr-1">
+              {currentComments.length === 0 ? (
+                <p className={`text-center text-xs ${isLightMode ? "text-slate-500" : "text-raw-silver/45"}`}>
+                  No comments yet. Be the first.
+                </p>
+              ) : (
+                currentComments.map((comment) => (
+                  <article key={comment.id} className="border border-raw-border/35 bg-raw-black/50 px-3.5 py-2.5">
+                    <div className="flex items-center justify-between text-[11px] text-raw-silver/50">
+                      <span>@{comment.author}</span>
+                      <span>{comment.createdAt}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-raw-silver/85">{comment.content}</p>
+                  </article>
+                ))
+              )}
+              <div ref={commentsEndRef} />
+            </div>
+
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -475,25 +495,6 @@ export function DashboardPolls({
                 <SendHorizontal className="size-3.5" />
               </button>
             </form>
-
-            <div className="mt-4 max-h-64 overflow-y-auto flex flex-col gap-2.5 pr-1">
-              {currentComments.length === 0 ? (
-                <p className={`text-center text-xs ${isLightMode ? "text-slate-500" : "text-raw-silver/45"}`}>
-                  No comments yet. Be the first.
-                </p>
-              ) : (
-                currentComments.map((comment) => (
-                  <article key={comment.id} className="border border-raw-border/35 bg-raw-black/50 px-3.5 py-2.5">
-                    <div className="flex items-center justify-between text-[11px] text-raw-silver/50">
-                      <span>@{comment.author}</span>
-                      <span>{comment.createdAt}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-raw-silver/85">{comment.content}</p>
-                  </article>
-                ))
-              )}
-              <div ref={commentsEndRef} />
-            </div>
           </div>
         )}
       </section>
