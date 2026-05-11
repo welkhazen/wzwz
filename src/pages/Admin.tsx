@@ -1472,7 +1472,7 @@ export default function Admin() {
     }
   };
 
- = (direction: -1 | 1) => {
+  const stepReviewCursor = (direction: -1 | 1) => {
     if (slicedAvatars.length === 0) return;
     setReviewCursor((previous) => {
       const next = previous + direction;
