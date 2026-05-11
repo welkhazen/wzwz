@@ -211,6 +211,7 @@ export default function Dashboard({
       <DashboardNav
         username={user.username}
         avatarLevel={avatarLevel}
+        tokenBalance={0}
         showAdminLink={user.role === "admin"}
         onProfileClick={handleProfileClick}
         onLogout={onLogout}

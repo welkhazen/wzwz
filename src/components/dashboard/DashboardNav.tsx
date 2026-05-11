@@ -15,6 +15,7 @@ import {
   Sun,
   Monitor,
 } from "lucide-react";
+import TokenImage from "@/assets/tokens.png";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/providers/useTheme";
@@ -33,6 +34,7 @@ export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "com
 interface DashboardNavProps {
   username: string;
   avatarLevel: number;
+  tokenBalance?: number;
   showAdminLink?: boolean;
   onProfileClick: () => void;
   onLogout: () => void;
@@ -41,7 +43,7 @@ interface DashboardNavProps {
   communities?: PersistedCommunityRecord[];
 }
 
-export function DashboardNav({ username, avatarLevel, showAdminLink = false, onProfileClick, onLogout, communityTitle, onBack, communities: propCommunities }: DashboardNavProps) {
+export function DashboardNav({ username, avatarLevel, tokenBalance = 0, showAdminLink = false, onProfileClick, onLogout, communityTitle, onBack, communities: propCommunities }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -124,8 +126,16 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
           </div>
         )}
 
-        {/* Right: bell + avatar */}
+        {/* Right: balance chip + bell + avatar */}
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+          <div
+            className="flex items-center gap-1.5 rounded-full border border-raw-gold/25 bg-raw-gold/[0.08] px-2.5 py-1 text-xs font-semibold text-raw-gold"
+            title="Token balance"
+          >
+            <img src={TokenImage} alt="Token" className="h-3.5 w-3.5 object-contain" />
+            <span>{tokenBalance.toLocaleString()}</span>
+          </div>
+
           <div className="relative" ref={notifRef}>
             <button
               type="button"
@@ -201,9 +211,13 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                 )}
               >
                 <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-raw-text">View Profile</p>
                   <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{username}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1 rounded-full border border-raw-gold/25 bg-raw-gold/[0.1] px-2 py-0.5 text-[10px] font-semibold text-raw-gold">
+                  <img src={TokenImage} alt="Token" className="h-3 w-3 object-contain" />
+                  <span>{tokenBalance.toLocaleString()}</span>
                 </div>
               </button>
 
