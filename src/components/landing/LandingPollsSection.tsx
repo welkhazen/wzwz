@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
-import { fetchSupabasePolls, fetchPollComments, addPollComment } from "@/utils/supabasePolls";
+import { fetchSupabasePolls } from "@/utils/supabasePolls";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
 
 interface PollItem {
@@ -20,6 +20,30 @@ const FALLBACK: PollItem[] = POLL_QUESTION_SEEDS.map((s) => ({
   yesPercent: Math.round((s.yesVotes / (s.yesVotes + s.noVotes)) * 100),
   noPercent: Math.round((s.noVotes / (s.yesVotes + s.noVotes)) * 100),
 }));
+
+const SEED_COMMENTS: Record<number, string[]> = {
+  0: [
+    "100% — I drop all the masks when I'm alone",
+    "That's basically the only time I feel real",
+    "Honestly yes, social pressure is exhausting",
+    "Wish I could feel that way around people too",
+    "Not even close to the same person in public",
+  ],
+  1: [
+    "Depends on the values, but probably yes",
+    "Already looking for something like this",
+    "The right community genuinely changes everything",
+    "Most communities talk values but don't live them",
+    "Yes, if it's honest and not performative",
+  ],
+  2: [
+    "Absolutely — a static teacher stops being relevant",
+    "The best ones I had were still figuring things out",
+    "Growth goes both ways or it's just a transaction",
+    "Nothing worse than someone who stopped learning",
+    "Yes, that vulnerability builds real trust",
+  ],
+};
 
 const CARD_CLIP =
   "polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px)";
@@ -98,7 +122,6 @@ export function LandingPollsSection() {
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
-  const [dbComments, setDbComments] = useState<string[]>([]);
 
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
@@ -128,32 +151,13 @@ export function LandingPollsSection() {
   const currentPoll = polls[index];
   const selected = answers[index];
   const showComments = !!selected;
-  const allComments = currentPoll?.id
-    ? [...dbComments, ...(extraComments[index] ?? [])]
-    : (extraComments[index] ?? []);
+  const allComments = [...(SEED_COMMENTS[index] ?? []), ...(extraComments[index] ?? [])];
 
-
-  useEffect(() => {
-    if (!currentPoll?.id) { setDbComments([]); return; }
-    let alive = true;
-    fetchPollComments(currentPoll.id)
-      .then((rows) => { if (alive) setDbComments(rows.map((r) => r.body)); })
-      .catch(() => { if (alive) setDbComments([]); });
-    return () => { alive = false; };
-  }, [currentPoll?.id]);
-
-  const handleSubmitComment = async () => {
+  const handleSubmitComment = () => {
     const text = (commentInputs[index] ?? "").trim();
     if (!text) return;
     setExtraComments((prev) => ({ ...prev, [index]: [...(prev[index] ?? []), text] }));
     setCommentInputs((prev) => ({ ...prev, [index]: "" }));
-    if (!currentPoll?.id) return;
-    try {
-      const saved = await addPollComment(currentPoll.id, text);
-      setDbComments((prev) => [saved.body, ...prev]);
-    } catch {
-      // comment still shown locally
-    }
   };
 
   const [waterFilled, setWaterFilled] = useState(false);
@@ -441,20 +445,22 @@ export function LandingPollsSection() {
                     className="px-4 py-4"
                     style={{
                       clipPath: COMMENT_CLIP,
-                      background: "linear-gradient(165deg, #111111 0%, #070707 100%)",
+                      background: isLight
+                        ? "linear-gradient(165deg, #fdfaf0 0%, #f5f0e0 100%)"
+                        : "linear-gradient(165deg, #111111 0%, #070707 100%)",
                     }}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#F1C42D]/60 mb-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#F1C42D]/70 mb-3">
                       Anonymous Comments
                     </p>
 
                     <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
                       {allComments.map((c, i) => (
                         <div key={i} className="flex items-start gap-2">
-                          <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-[#F1C42D]/12 flex items-center justify-center text-[9px] text-[#F1C42D]/55 font-bold">
+                          <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-[#F1C42D]/15 flex items-center justify-center text-[9px] text-[#F1C42D]/70 font-bold">
                             ?
                           </span>
-                          <p className="text-[12px] text-white/55 leading-[1.4]">{c}</p>
+                          <p className={`text-[12px] leading-[1.4] ${isLight ? "text-stone-600" : "text-white/55"}`}>{c}</p>
                         </div>
                       ))}
                     </div>
@@ -468,7 +474,11 @@ export function LandingPollsSection() {
                           setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
                         }
                         onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
-                        className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-1.5 text-[12px] text-white/70 placeholder:text-white/25 outline-none focus:border-[#F1C42D]/40 transition"
+                        className={`flex-1 rounded px-3 py-1.5 text-[12px] outline-none transition ${
+                          isLight
+                            ? "bg-black/5 border border-black/10 text-stone-700 placeholder:text-stone-400 focus:border-[#F1C42D]/50"
+                            : "bg-white/5 border border-white/10 text-white/70 placeholder:text-white/25 focus:border-[#F1C42D]/40"
+                        }`}
                       />
                       <button
                         type="button"
