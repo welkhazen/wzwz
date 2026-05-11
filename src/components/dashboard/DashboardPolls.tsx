@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
@@ -29,7 +29,7 @@ interface PollProgressProps {
 function PollProgress({ currentIndex, total, onSelect }: PollProgressProps) {
   return (
     <div className="mt-3 text-center">
-      <p className="font-display text-[12px] tracking-[0.32em] text-[#D9D9D9]">{currentIndex + 1} / {total}</p>
+      <p className="font-display text-[12px] tracking-[0.32em] text-raw-silver/70">{currentIndex + 1} / {total}</p>
       <div className="mt-3 flex items-center justify-center gap-2">
         {Array.from({ length: total }).map((_, index) => (
           <button
@@ -39,7 +39,7 @@ function PollProgress({ currentIndex, total, onSelect }: PollProgressProps) {
             className={`h-1.5 rounded-none transition-all ${
               index === currentIndex
                 ? "w-7 bg-[#F1C42D] shadow-[0_0_10px_rgba(241,196,45,0.45)]"
-                : "w-4 bg-[#3A3A3A]"
+                : "w-4 bg-raw-border/60"
             }`}
             aria-label={`Go to poll ${index + 1}`}
           />
@@ -50,14 +50,6 @@ function PollProgress({ currentIndex, total, onSelect }: PollProgressProps) {
 }
 
 interface PollHistoryComment {
-  id: string;
-  author: string;
-  content: string;
-  createdAt: string;
-  replies?: PollHistoryReply[];
-}
-
-interface PollHistoryReply {
   id: string;
   author: string;
   content: string;
@@ -121,9 +113,7 @@ export function DashboardPolls({
   const [answerHistory, setAnswerHistory] = useState<Record<string, string>>({});
   const [historyComments, setHistoryComments] = useState<Record<string, PollHistoryComment[]>>({});
   const [commentDraft, setCommentDraft] = useState("");
-  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
-  const [showAllComments, setShowAllComments] = useState(false);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
 
   useEffect(() => {
@@ -167,8 +157,11 @@ export function DashboardPolls({
     if (currentPollIndex >= polls.length && polls.length > 0) {
       setCurrentPollIndex(polls.length - 1);
     }
-    setShowAllComments(false);
   }, [currentPollIndex, polls.length]);
+
+  useEffect(() => {
+    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "instant" }), 0);
+  }, [currentPollIndex]);
 
   const currentPoll = polls[currentPollIndex]
     ? {
@@ -198,6 +191,7 @@ export function DashboardPolls({
             }),
           })),
         }));
+        setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "instant" }), 0);
       })
       .catch(() => {
         // leave existing comments in place if fetch fails
@@ -318,10 +312,11 @@ export function DashboardPolls({
 
     setHistoryComments((previous) => ({
       ...previous,
-      [currentPoll.id]: [nextComment, ...(previous[currentPoll.id] ?? [])],
+      [currentPoll.id]: [...(previous[currentPoll.id] ?? []), nextComment],
     }));
 
     setCommentDraft("");
+    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
       await addPollComment(currentPoll.id, content);
@@ -336,42 +331,6 @@ export function DashboardPolls({
     handleCommentAdd();
   };
 
-  const handleReplyAdd = (commentId: string) => {
-    if (!currentPoll) return;
-
-    const content = (replyDrafts[commentId] ?? "").trim();
-    if (!content) return;
-
-    const nextReply: PollHistoryReply = {
-      id: `${commentId}-reply-${Date.now()}`,
-      author: username,
-      content,
-      createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setHistoryComments((previous) => ({
-      ...previous,
-      [currentPoll.id]: (previous[currentPoll.id] ?? []).map((comment) =>
-        comment.id === commentId
-          ? {
-              ...comment,
-              replies: [...(comment.replies ?? []), nextReply],
-            }
-          : comment
-      ),
-    }));
-
-    setReplyDrafts((previous) => ({
-      ...previous,
-      [commentId]: "",
-    }));
-  };
-
-  const handleReplyKeyDown = (event: React.KeyboardEvent<HTMLInputElement>, commentId: string) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    handleReplyAdd(commentId);
-  };
 
   if (!currentPoll) {
     return (
@@ -484,6 +443,26 @@ export function DashboardPolls({
             <div className="mb-2 flex items-center justify-between">
               <p className={`text-[11px] uppercase tracking-[0.12em] ${isLightMode ? "text-slate-600" : "text-raw-silver/55"}`}>COMMENTS</p>
             </div>
+
+            <div className="mb-3 max-h-64 overflow-y-auto flex flex-col gap-2.5 pr-1">
+              {currentComments.length === 0 ? (
+                <p className={`text-center text-xs ${isLightMode ? "text-slate-500" : "text-raw-silver/45"}`}>
+                  No comments yet. Be the first.
+                </p>
+              ) : (
+                currentComments.map((comment) => (
+                  <article key={comment.id} className="border border-raw-border/35 bg-raw-black/50 px-3.5 py-2.5">
+                    <div className="flex items-center justify-between text-[11px] text-raw-silver/50">
+                      <span>@{comment.author}</span>
+                      <span>{comment.createdAt}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-raw-silver/85">{comment.content}</p>
+                  </article>
+                ))
+              )}
+              <div ref={commentsEndRef} />
+            </div>
+
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -529,46 +508,6 @@ export function DashboardPolls({
                       <span>{comment.createdAt}</span>
                     </div>
                     <p className="mt-1 text-sm text-raw-silver/85">{comment.content}</p>
-
-                    <div className="mt-2 flex flex-col gap-1.5">
-                      {(comment.replies ?? []).slice(-2).map((reply) => (
-                        <div key={reply.id} className="border border-raw-border/35 bg-raw-black/30 px-3 py-2">
-                          <div className="flex items-center justify-between text-[10px] text-raw-silver/45">
-                            <span>@{reply.author}</span>
-                            <span>{reply.createdAt}</span>
-                          </div>
-                          <p className="mt-0.5 text-xs text-raw-silver/80">{reply.content}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <form
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        handleReplyAdd(comment.id);
-                      }}
-                      className="mt-2 flex items-center gap-2 rounded-full border border-raw-border/35 bg-raw-black/30 px-3 py-1.5"
-                    >
-                      <input
-                        value={replyDrafts[comment.id] ?? ""}
-                        onChange={(event) =>
-                          setReplyDrafts((previous) => ({
-                            ...previous,
-                            [comment.id]: event.target.value,
-                          }))
-                        }
-                        onKeyDown={(event) => handleReplyKeyDown(event, comment.id)}
-                        placeholder="Reply..."
-                        className="flex-1 bg-transparent text-xs text-raw-text placeholder:text-raw-silver/35 focus:outline-none"
-                      />
-                      <button
-                        type="submit"
-                        disabled={!(replyDrafts[comment.id] ?? "").trim()}
-                        className="rounded-full border border-raw-border/40 px-2 py-0.5 text-[10px] text-raw-silver/80 hover:bg-raw-surface/40 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        Reply
-                      </button>
-                    </form>
                   </article>
                 ))
               )}
