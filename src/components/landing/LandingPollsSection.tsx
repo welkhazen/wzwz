@@ -125,7 +125,6 @@ export function LandingPollsSection() {
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
-  const [dbComments, setDbComments] = useState<string[]>([]);
 
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
@@ -155,18 +154,7 @@ export function LandingPollsSection() {
   const currentPoll = polls[index];
   const selected = answers[index];
   const showComments = !!selected;
-  const allComments = currentPoll?.id
-    ? [...dbComments, ...(extraComments[index] ?? [])]
-    : (extraComments[index] ?? []);
-
-  useEffect(() => {
-    if (!currentPoll?.id) { setDbComments([]); return; }
-    let alive = true;
-    fetchPollComments(currentPoll.id)
-      .then((rows) => { if (alive) setDbComments(rows.map((r) => r.body)); })
-      .catch(() => { if (alive) setDbComments([]); });
-    return () => { alive = false; };
-  }, [currentPoll?.id]);
+  const allComments = [...(SEED_COMMENTS[index] ?? []), ...(extraComments[index] ?? [])];
 
   const handleSubmitComment = () => {
     const text = (commentInputs[index] ?? "").trim();
