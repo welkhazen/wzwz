@@ -4,7 +4,7 @@ import { ChevronRight, Dices, Zap, Flame, Users, BarChart3, Sparkles } from "luc
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import { readCommunityChats } from "@/lib/communityChat";
-import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityConstants";
+import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS, FEATURED_COMMUNITY_IDS } from "@/lib/communityConstants";
 
 interface DashboardHomeProps {
   username: string;
@@ -32,32 +32,37 @@ function CommunityCard({
   return (
     <button
       onClick={() => onOpenCommunity(community.id)}
-      className="group relative bg-[#1a1a1a] border border-white/5 p-5 rounded-2xl text-left w-full cursor-pointer hover:border-raw-gold/30 transition-all duration-200"
+      className="group relative bg-[#1a1a1a] border border-white/5 rounded-2xl text-left w-full cursor-pointer hover:border-raw-gold/30 transition-all duration-200 overflow-hidden"
     >
-      {rank !== undefined && (
-        <div className={`absolute top-3 right-3 px-1.5 py-0.5 rounded-lg text-[9px] font-black border ${
-          rank === 0
-            ? "bg-raw-gold/20 text-raw-gold border-raw-gold/30"
-            : "bg-white/5 text-white/40 border-white/10"
-        }`}>
-          #{rank + 1}
-        </div>
-      )}
-      <div className="w-12 h-12 rounded-xl overflow-hidden mb-4 border border-white/10 shrink-0">
+      {/* Cover */}
+      <div className="relative h-36 overflow-hidden">
         {coverVideo ? (
-          <video src={coverVideo} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+          <video src={coverVideo} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" autoPlay loop muted playsInline />
         ) : coverImage ? (
-          <img src={coverImage} alt={community.title} className="w-full h-full object-cover" loading="lazy" />
+          <img src={coverImage} alt={community.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
         ) : (
           <div className="w-full h-full bg-raw-gold/5 flex items-center justify-center">
-            <span className="font-display text-lg text-raw-gold/30">{community.abbr}</span>
+            <span className="font-display text-4xl text-raw-gold/20">{community.abbr}</span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/80 to-transparent" />
+        {rank !== undefined && (
+          <div className={`absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-lg text-[9px] font-black border ${
+            rank === 0
+              ? "bg-raw-gold/20 text-raw-gold border-raw-gold/30"
+              : "bg-black/50 text-white/50 border-white/10"
+          }`}>
+            #{rank + 1}
           </div>
         )}
       </div>
-      <h3 className="text-base font-bold text-white leading-snug mb-0.5">{community.title}</h3>
-      <p className="text-[10px] text-white/40 uppercase tracking-[0.1em] font-bold flex items-center gap-1">
-        <Users className="size-2.5" />{community.members.length} members
-      </p>
+      {/* Info */}
+      <div className="p-4">
+        <h3 className="text-sm font-bold text-white leading-snug mb-1">{community.title}</h3>
+        <p className="text-[10px] text-white/40 uppercase tracking-[0.1em] font-bold flex items-center gap-1">
+          <Users className="size-2.5" />{community.members.length} members
+        </p>
+      </div>
     </button>
   );
 }
@@ -76,11 +81,10 @@ export function DashboardHome({
     [allCommunities],
   );
 
-  const trendingIds = useMemo(() => new Set(trending.map((c) => c.id)), [trending]);
-
+  // Always show featured communities as picks regardless of trending overlap
   const picks = useMemo(
-    () => allCommunities.filter((c) => !trendingIds.has(c.id)).slice(0, 4),
-    [allCommunities, trendingIds],
+    () => FEATURED_COMMUNITY_IDS.map((id) => allCommunities.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c),
+    [allCommunities],
   );
 
   const pollProgress = Math.min(100, (dailyAnsweredCount / dailyPollLimit) * 100);
@@ -167,37 +171,36 @@ export function DashboardHome({
       )}
 
       {/* ── Daily Poll Progress ── */}
-      <section className="space-y-5">
+      <section className="space-y-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="size-4 text-raw-gold" />
           <h2 className="text-xl font-bold text-white">Daily Poll Progress</h2>
         </div>
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-[2rem] p-6 md:p-8 relative overflow-hidden">
-          <div className="absolute top-6 right-8 text-raw-gold font-bold text-xs tracking-widest">{dailyItemsLeft} LEFT</div>
-          <div className="flex flex-col items-center text-center space-y-6 max-w-xl mx-auto py-2">
-            <h3 className="text-2xl font-bold text-white tracking-tight">Voice Your Opinion</h3>
-            <div className="w-12 h-12 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/20">
-              <BarChart3 className="size-6 text-raw-gold" />
+        <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/20">
+              <BarChart3 className="size-5 text-raw-gold" />
             </div>
-            <div className="w-full space-y-2">
-              <div className="flex justify-between text-xs text-white/40">
-                <span>Progress</span>
-                <span className="text-raw-gold font-bold">{dailyAnsweredCount} / {dailyPollLimit}</span>
-              </div>
-              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                <div className="h-full bg-raw-gold rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(241,196,45,0.4)]" style={{ width: `${pollProgress}%` }} />
-              </div>
+            <div>
+              <p className="text-sm font-bold text-white">Voice Your Opinion</p>
+              <p className="text-[11px] text-white/40">50 XP per poll · anonymous</p>
             </div>
-            <p className="text-[15px] text-white/60 leading-relaxed">
-              Earn 50 XP for every poll. Your opinion remains completely anonymous.
-            </p>
-            <button
-              onClick={() => onNavigate("polls")}
-              className="w-full max-w-xs py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
-            >
-              Answer Now
-            </button>
           </div>
+          <div className="flex-1 min-w-[140px] space-y-1.5">
+            <div className="flex justify-between text-[11px] text-white/40">
+              <span>Progress</span>
+              <span className="text-raw-gold font-bold">{dailyAnsweredCount} / {dailyPollLimit}</span>
+            </div>
+            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-raw-gold rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(241,196,45,0.4)]" style={{ width: `${pollProgress}%` }} />
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate("polls")}
+            className="shrink-0 px-5 py-2.5 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.18em] hover:bg-raw-gold/5 transition-all"
+          >
+            Answer Now
+          </button>
         </div>
       </section>
 
