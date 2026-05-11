@@ -55,15 +55,15 @@ const FloatingDockMobile = ({
   return (
     <div
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 flex lg:hidden flex-row items-center justify-around bg-raw-black/95 shadow-2xl border-t border-raw-border/25 pt-2",
+        "fixed bottom-0 left-0 right-0 z-50 flex lg:hidden flex-row items-center justify-around bg-raw-black border-t border-raw-border/40",
         className
       )}
-      style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))", paddingTop: "0.5rem" }}
     >
       {items.map((item) => (
         <motion.a
-          whileHover={{ scale: 1.18 }}
-          animate={{ scale: item.active ? 1.18 : 1 }}
+          whileTap={{ scale: 0.9 }}
+          animate={{ scale: item.active ? 1.05 : 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 18 }}
           href={item.href}
           key={item.title}
@@ -74,11 +74,12 @@ const FloatingDockMobile = ({
             }
           }}
           className={cn(
-            "flex h-12 w-12 items-center justify-center rounded-full border border-raw-border/40 bg-raw-surface text-raw-silver/70 mx-1 transition-shadow",
-            item.active ? "border-raw-gold/45 bg-raw-gold/15 text-raw-gold shadow-lg" : "shadow",
+            "flex flex-col items-center gap-0.5 px-2 pb-1 transition-colors",
+            item.active ? "text-raw-gold" : "text-raw-silver/50",
           )}
         >
-          <motion.div className="h-5 w-5" style={{}}>{item.icon}</motion.div>
+          <div className="h-5 w-5">{item.icon}</div>
+          <span className="text-[9px] font-medium tracking-wide uppercase">{item.title}</span>
         </motion.a>
       ))}
     </div>
