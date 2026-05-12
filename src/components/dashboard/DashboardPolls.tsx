@@ -180,10 +180,10 @@ export function DashboardPolls({
     [polls, answerHistory]
   );
 
-  // Once the daily limit is hit, show only polls the user already answered.
+  // Once the daily limit is hit, show today's answered polls (capped at dailyPollLimit).
   // While still under the limit, show unseen polls (or answered ones if nothing left to answer).
   const displayPolls = isDailyPollLimitReached
-    ? answeredPolls
+    ? answeredPolls.slice(0, dailyPollLimit)
     : unseenPolls.length > 0
       ? unseenPolls
       : answeredPolls;
@@ -427,13 +427,13 @@ export function DashboardPolls({
               {dailyAnsweredCount}/{dailyPollLimit}
             </span>
           </div>
-          <PollProgress currentIndex={Math.min(currentPollIndex, dailyPollLimit - 1)} total={dailyPollLimit} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={isDailyPollLimitReached ? () => {} : setCurrentPollIndex} />
+          <PollProgress currentIndex={Math.min(currentPollIndex, dailyPollLimit - 1)} total={dailyPollLimit} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
         </div>
 
         <div className="relative w-full max-w-[24rem]">
           <button
             onClick={() => setCurrentPollIndex((previous) => Math.max(0, previous - 1))}
-            disabled={isDailyPollLimitReached || currentPollIndex === 0}
+            disabled={currentPollIndex === 0}
             className={`absolute -left-2 top-1/2 z-20 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-35 md:-left-6 ${
               isLightMode
                 ? "border-slate-300 bg-white/95 text-slate-700 shadow-[0_10px_25px_rgba(15,23,42,0.2)] hover:border-amber-400 hover:text-amber-700"
@@ -466,7 +466,7 @@ export function DashboardPolls({
 
           <button
             onClick={() => setCurrentPollIndex((previous) => Math.min(displayPolls.length - 1, previous + 1))}
-            disabled={isDailyPollLimitReached || currentPollIndex === displayPolls.length - 1}
+            disabled={currentPollIndex === displayPolls.length - 1}
             className={`absolute -right-2 top-1/2 z-20 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-35 md:-right-6 ${
               isLightMode
                 ? "border-slate-300 bg-white/95 text-slate-700 shadow-[0_10px_25px_rgba(15,23,42,0.2)] hover:border-amber-400 hover:text-amber-700"
