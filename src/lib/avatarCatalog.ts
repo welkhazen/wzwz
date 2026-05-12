@@ -222,6 +222,8 @@ export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
   }));
 }
 
+export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<AvatarCatalogItem[]> {
+  const next = writeAvatarCatalogLocal(items);
 
   if (avatarBackendMissingTables) {
     return next;
