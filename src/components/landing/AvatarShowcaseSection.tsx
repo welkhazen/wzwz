@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
@@ -23,6 +23,7 @@ export function AvatarShowcaseSection() {
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
   const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -34,6 +35,10 @@ export function AvatarShowcaseSection() {
 
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
   const total = avatarList.length || 1;
+  const previewAvatar = useMemo(
+    () => extraPreviewAvatar ?? avatarList[previewIndex - 1] ?? avatarList[0] ?? null,
+    [avatarList, extraPreviewAvatar, previewIndex]
+  );
 
   const canPrev = true;
   const canNext = true;
@@ -80,13 +85,13 @@ export function AvatarShowcaseSection() {
       <button
         key={index}
         type="button"
-        onClick={() => { setAvatarIndex(index); setPreviewIndex(index); }}
-        onTouchStart={mobile ? () => setPreviewIndex(index) : undefined}
+        onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(index); setPreviewIndex(index); }}
+        onTouchStart={mobile ? () => { setExtraPreviewAvatar(null); setPreviewIndex(index); } : undefined}
         onTouchEnd={mobile ? () => setPreviewIndex(avatarIndex) : undefined}
         onTouchCancel={mobile ? () => setPreviewIndex(avatarIndex) : undefined}
-        onMouseEnter={!mobile ? () => setPreviewIndex(index) : undefined}
+        onMouseEnter={!mobile ? () => { setExtraPreviewAvatar(null); setPreviewIndex(index); } : undefined}
         onMouseLeave={!mobile ? () => setPreviewIndex(avatarIndex) : undefined}
-        onFocus={!mobile ? () => setPreviewIndex(index) : undefined}
+        onFocus={!mobile ? () => { setExtraPreviewAvatar(null); setPreviewIndex(index); } : undefined}
         onBlur={!mobile ? () => setPreviewIndex(avatarIndex) : undefined}
         className="group relative flex flex-col items-center gap-3 outline-none"
         aria-label={`Select ${avatar.name}`}
@@ -181,30 +186,30 @@ Just like in real life, every person is born with a name, an appearance, and an 
       <div className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
 
         {/* Phone — zoomed to fit the left half */}
-        <div className="w-[46%] shrink-0 overflow-hidden">
+        <div className="w-[40%] shrink-0 overflow-hidden pt-1">
           {/* zoom shrinks layout footprint; 280 × 0.54 ≈ 151px fits in ~172px half */}
-          <div style={{ zoom: 0.54 }}>
+          <div style={{ zoom: 0.48 }}>
             <PhoneMockup className="w-[310px]" showStatusBar={false}>
-              <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
+              <AvatarPhoneHomeScreen avatarIndex={previewIndex} compact previewAvatar={previewAvatar} />
             </PhoneMockup>
           </div>
         </div>
 
         {/* Avatar grid — right half */}
         <div className="flex flex-1 flex-col min-w-0 pt-1">
-          <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.18em] text-raw-gold/70">
+          <p className="mb-3 text-center font-display text-[8px] uppercase tracking-[0.14em] text-raw-gold/70 min-[380px]:text-[9px] min-[380px]:tracking-[0.18em]">
             Choose your avatar
           </p>
           <div
             ref={scrollRef}
-            className="grid grid-cols-2 gap-x-2 gap-y-4 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            style={{ maxHeight: `${646 * 0.54 - 24}px` }}
+            className="grid grid-cols-2 gap-x-2 gap-y-3 overflow-y-auto [scrollbar-width:none] min-[380px]:gap-y-4 [&::-webkit-scrollbar]:hidden"
+            style={{ maxHeight: `${646 * 0.48 - 10}px` }}
           >
             {avatarList.map((avatar, i) => (
               <button
                 key={i + 1}
                 type="button"
-                onClick={() => { setAvatarIndex(i + 1); setPreviewIndex(i + 1); }}
+                onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(i + 1); setPreviewIndex(i + 1); }}
                 className="flex flex-col items-center gap-1 outline-none"
                 aria-label={`Select ${avatar.name}`}
                 aria-pressed={avatarIndex === i + 1}
@@ -233,7 +238,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
       {/* ── Tablet (sm–lg): phone on top, windowed avatar strip below ── */}
       <div className="mx-auto hidden w-full max-w-5xl flex-col items-center gap-8 sm:flex lg:hidden">
         <PhoneMockup className="w-[310px]" showStatusBar={false}>
-          <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
+          <AvatarPhoneHomeScreen avatarIndex={previewIndex} previewAvatar={previewAvatar} />
         </PhoneMockup>
 
         <div
@@ -278,7 +283,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
 
         <div className="flex shrink-0 justify-center">
           <PhoneMockup className="w-[310px]" showStatusBar={false}>
-            <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
+          <AvatarPhoneHomeScreen avatarIndex={previewIndex} previewAvatar={previewAvatar} />
           </PhoneMockup>
         </div>
 
@@ -359,7 +364,13 @@ Just like in real life, every person is born with a name, an appearance, and an 
 
                 <div className="flex flex-wrap justify-center gap-8">
                   {newAvatars.map((avatar) => (
-                    <div key={avatar.id} className="relative flex flex-col items-center gap-3">
+                    <button
+                      key={avatar.id}
+                      type="button"
+                      onClick={() => setExtraPreviewAvatar(avatar)}
+                      className="relative flex flex-col items-center gap-3 outline-none transition-transform active:scale-95"
+                      aria-label={`Preview ${avatar.name}`}
+                    >
                       <span
                         className="absolute -top-1 -right-1 z-10 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-raw-black"
                         style={{
@@ -369,14 +380,16 @@ Just like in real life, every person is born with a name, an appearance, and an 
                       >
                         NEW
                       </span>
-                      <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-raw-gold/40 bg-raw-surface/40">
+                      <div className={`h-20 w-20 overflow-hidden rounded-full border-2 bg-raw-surface/40 transition-colors ${
+                        extraPreviewAvatar?.id === avatar.id ? "border-raw-gold" : "border-raw-gold/40"
+                      }`}>
                         {avatar.imageSrc
-                          ? <img src={avatar.imageSrc} alt={avatar.name} className="h-full w-full object-cover" />
+                          ? <img src={avatar.imageSrc} alt={avatar.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                           : <div className="h-full w-full" />
                         }
                       </div>
                       <p className="text-center text-xs text-raw-silver/70">{avatar.name}</p>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>

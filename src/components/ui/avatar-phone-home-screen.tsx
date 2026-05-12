@@ -3,52 +3,75 @@ import { getAvatar } from "@/lib/avataridentity";
 
 interface AvatarPhoneHomeScreenProps {
   avatarIndex: number;
+  compact?: boolean;
+  previewAvatar?: {
+    name?: string;
+    imageSrc?: string;
+    bg?: string;
+    glow?: string;
+  } | null;
 }
 
-export function AvatarPhoneHomeScreen({ avatarIndex }: AvatarPhoneHomeScreenProps) {
+export function AvatarPhoneHomeScreen({ avatarIndex, compact = false, previewAvatar = null }: AvatarPhoneHomeScreenProps) {
   const theme = getAvatar(avatarIndex);
+  const activeAvatar = previewAvatar ?? theme;
+  const activeBg = activeAvatar.bg ?? theme.bg;
+  const activeGlow = activeAvatar.glow ?? theme.glow;
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-gradient-to-b from-[#f2f2f2] via-[#e6e6e8] to-[#d7d7da] px-4 pt-5 pb-4">
+    <div className={`relative flex h-full flex-col overflow-hidden bg-gradient-to-b from-[#f2f2f2] via-[#e6e6e8] to-[#d7d7da] ${compact ? "px-4 pt-5 pb-3" : "px-4 pt-5 pb-4"}`}>
       <div className="flex-1">
-      <div className="grid grid-cols-4 gap-x-3 gap-y-5">
-        <AppIcon kind="facetime" label="FaceTime" />
-        <AppIcon kind="calendar" label="Calendar" />
-        <AppIcon kind="photos" label="Photos" />
-        <AppIcon kind="camera" label="Camera" />
+      <div className={`grid grid-cols-4 ${compact ? "gap-x-3 gap-y-4" : "gap-x-3 gap-y-5"}`}>
+        <AppIcon kind="facetime" label="FaceTime" compact={compact} />
+        <AppIcon kind="calendar" label="Calendar" compact={compact} />
+        <AppIcon kind="photos" label="Photos" compact={compact} />
+        <AppIcon kind="camera" label="Camera" compact={compact} />
 
-        <AppIcon kind="clock" label="Clock" />
-        <AppIcon kind="maps" label="Maps" />
-        <AppIcon kind="weather" label="Weather" />
-        <AppIcon kind="notes" label="Notes" />
+        <AppIcon kind="clock" label="Clock" compact={compact} />
+        <AppIcon kind="maps" label="Maps" compact={compact} />
+        <AppIcon kind="weather" label="Weather" compact={compact} />
+        <AppIcon kind="notes" label="Notes" compact={compact} />
 
-        <AppIcon kind="reminders" label="Reminders" />
-        <AppIcon kind="stocks" label="Stocks" />
+        <AppIcon kind="reminders" label="Reminders" compact={compact} />
+        <AppIcon kind="stocks" label="Stocks" compact={compact} />
 
-        <div className="col-span-2 row-span-2 flex flex-col items-center gap-2">
+        <div className={`col-span-2 row-span-2 flex flex-col items-center ${compact ? "gap-1.5" : "gap-2"}`}>
           <div
             key={avatarIndex}
-            className="relative flex h-full min-h-[150px] w-full animate-[iconPop_420ms_ease-out] items-center justify-center overflow-hidden rounded-[20px] shadow-lg"
+            className={`relative flex h-full w-full animate-[iconPop_420ms_ease-out] items-center justify-center overflow-hidden shadow-lg ${compact ? "min-h-[156px] rounded-[18px]" : "min-h-[150px] rounded-[20px]"}`}
             style={{
-              background: `linear-gradient(135deg, ${theme.bg} 0%, #050505 70%)`,
-              boxShadow: theme.glow !== "none" ? `0 0 22px ${theme.glow}` : "0 6px 16px rgba(0,0,0,0.35)",
+              background: `linear-gradient(135deg, ${activeBg} 0%, #050505 70%)`,
+              boxShadow: activeGlow !== "none" ? `0 0 22px ${activeGlow}` : "0 6px 16px rgba(0,0,0,0.35)",
             }}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.06] to-transparent" />
-            <div className="relative scale-[1.45]">
-              <AvatarFigure avatarIndex={avatarIndex} size="md" selected />
-            </div>
+            {activeAvatar.imageSrc ? (
+              <img
+                key={activeAvatar.imageSrc}
+                src={activeAvatar.imageSrc}
+                alt={activeAvatar.name ?? "raW avatar"}
+                loading="eager"
+                decoding="async"
+                draggable={false}
+                className="relative h-full w-full animate-[iconPop_420ms_ease-out] object-cover"
+                style={{ objectPosition: "center 35%" }}
+              />
+            ) : (
+              <div className="relative scale-[1.45]">
+                <AvatarFigure avatarIndex={avatarIndex} size="md" selected />
+              </div>
+            )}
           </div>
           <span className="font-display text-[10px] tracking-[0.18em] text-[#222]">raW</span>
         </div>
 
-        <AppIcon kind="podcasts" label="Podcasts" />
-        <AppIcon kind="tv" label="TV" />
+        <AppIcon kind="podcasts" label="Podcasts" compact={compact} />
+        <AppIcon kind="tv" label="TV" compact={compact} />
 
-        <AppIcon kind="reminders" label="Health" />
-        <AppIcon kind="stocks" label="Wallet" />
-        <AppIcon kind="maps" label="Find My" />
-        <AppIcon kind="notes" label="Files" />
+        <AppIcon kind="reminders" label="Health" compact={compact} />
+        <AppIcon kind="stocks" label="Wallet" compact={compact} />
+        <AppIcon kind="maps" label="Find My" compact={compact} />
+        <AppIcon kind="notes" label="Files" compact={compact} />
       </div>
 
       </div>
@@ -60,11 +83,11 @@ export function AvatarPhoneHomeScreen({ avatarIndex }: AvatarPhoneHomeScreenProp
         <div className="h-[3px] w-[3px] rounded-full bg-[#1a1a1a]/25" />
       </div>
 
-      <div className="flex items-center justify-between rounded-[22px] bg-white/40 px-3 py-2 backdrop-blur-sm">
-        <DockIcon kind="phone" />
-        <DockIcon kind="siri" />
-        <DockIcon kind="messages" />
-        <DockIcon kind="music" />
+      <div className={`flex items-center justify-between rounded-[22px] bg-white/40 backdrop-blur-sm ${compact ? "px-3 py-1.5" : "px-3 py-2"}`}>
+        <DockIcon kind="phone" compact={compact} />
+        <DockIcon kind="siri" compact={compact} />
+        <DockIcon kind="messages" compact={compact} />
+        <DockIcon kind="music" compact={compact} />
       </div>
     </div>
   );
@@ -88,21 +111,27 @@ type IconKind =
   | "messages"
   | "music";
 
-function AppIcon({ kind, label }: { kind: IconKind; label: string }) {
+function AppIcon({ kind, label, compact = false }: { kind: IconKind; label: string; compact?: boolean }) {
   return (
-    <div className="flex flex-col items-center gap-1">
-      <IconTile kind={kind} />
-      <span className="leading-none text-[8px] font-medium text-[#222]">{label}</span>
+    <div className={`flex flex-col items-center ${compact ? "gap-0.5" : "gap-1"}`}>
+      <IconTile kind={kind} compact={compact} />
+      {!compact && <span className="leading-none text-[8px] font-medium text-[#222]">{label}</span>}
     </div>
   );
 }
 
-function DockIcon({ kind }: { kind: IconKind }) {
-  return <IconTile kind={kind} small />;
+function DockIcon({ kind, compact = false }: { kind: IconKind; compact?: boolean }) {
+  return <IconTile kind={kind} small compact={compact} />;
 }
 
-function IconTile({ kind, small = false }: { kind: IconKind; small?: boolean }) {
-  const sizeClass = small ? "h-[38px] w-[38px] rounded-[10px]" : "h-[44px] w-[44px] rounded-[11px]";
+function IconTile({ kind, small = false, compact = false }: { kind: IconKind; small?: boolean; compact?: boolean }) {
+  const sizeClass = small
+    ? compact
+      ? "h-[36px] w-[36px] rounded-[10px]"
+      : "h-[38px] w-[38px] rounded-[10px]"
+    : compact
+      ? "h-[42px] w-[42px] rounded-[11px]"
+      : "h-[44px] w-[44px] rounded-[11px]";
   const base = `flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.25)] ${sizeClass}`;
 
   switch (kind) {

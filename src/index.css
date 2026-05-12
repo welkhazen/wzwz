@@ -145,6 +145,14 @@
     scrollbar-color: rgb(var(--raw-accent) / 0.72) var(--scrollbar-track);
     transition: background-color 200ms ease, color 200ms ease;
   }
+
+  @media (max-width: 767px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
 }
 
 *::-webkit-scrollbar {
