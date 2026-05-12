@@ -37,6 +37,8 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
           <img
             src={theme.imageSrc}
             alt={theme.name}
+            loading="lazy"
+            decoding="async"
             onError={() => setImageFailed(true)}
             draggable={false}
             className="h-full w-full object-cover"
