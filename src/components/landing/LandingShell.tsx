@@ -53,29 +53,30 @@ export default function LandingShell({
         onSignupClick={() => setShowSignup(true)}
       />
 
-      <motion.div
-        className="relative overflow-x-hidden"
-        initial={{ opacity: 0, filter: "blur(14px)" }}
-        animate={siteReady ? { opacity: 1, filter: "blur(0px)" } : {}}
-        transition={{ duration: 0.75, ease: "easeOut" }}
-        style={{ pointerEvents: siteReady ? "auto" : "none" }}
-      >
-        <PerforatedBackground />
-        <MatrixBackground />
+      {siteReady && (
+        <motion.div
+          className="relative overflow-x-hidden"
+          initial={{ opacity: 0, filter: "blur(14px)" }}
+          animate={{ opacity: 1, filter: "blur(0px)" }}
+          transition={{ duration: 0.75, ease: "easeOut" }}
+        >
+          <PerforatedBackground />
+          <MatrixBackground />
 
-        <GlobeHero onSignupClick={() => setShowSignup(true)} />
-        <ProblemSection />
-        <HowItWorks />
-        <AvatarShowcaseSection />
-        <LandingPollsSection />
-        <Communities onSignupClick={() => setShowSignup(true)} />
-        <PersonalityInsightsSection />
-        <EarnedWarUpgradesSection />
-        <WheelReward onSignupClick={() => setShowSignup(true)} />
-        <WhyAnonymity />
-        <TestimonialsSection />
-        <LandingFooter />
-      </motion.div>
+          <GlobeHero onSignupClick={() => setShowSignup(true)} />
+          <ProblemSection />
+          <HowItWorks />
+          <AvatarShowcaseSection />
+          <LandingPollsSection />
+          <Communities onSignupClick={() => setShowSignup(true)} />
+          <PersonalityInsightsSection />
+          <EarnedWarUpgradesSection />
+          <WheelReward onSignupClick={() => setShowSignup(true)} />
+          <WhyAnonymity />
+          <TestimonialsSection />
+          <LandingFooter />
+        </motion.div>
+      )}
 
       <Suspense fallback={null}>
         <SignupModalLazy
