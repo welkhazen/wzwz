@@ -25,6 +25,21 @@ export class ErrorBoundary extends Component<
     const route =
       typeof window !== "undefined" ? window.location.pathname : "unknown";
 
+    // Auto-reload once when a lazy chunk fails to load after a new deployment.
+    const isChunkError =
+      error.message.includes("Failed to fetch dynamically imported module") ||
+      error.message.includes("Importing a module script failed") ||
+      error.name === "ChunkLoadError";
+
+    if (isChunkError && typeof window !== "undefined") {
+      const reloadKey = "raw.chunk_error_reload";
+      if (!sessionStorage.getItem(reloadKey)) {
+        sessionStorage.setItem(reloadKey, "1");
+        window.location.reload();
+        return;
+      }
+    }
+
     Sentry.captureException(error, {
       tags: { route },
       extra: { componentStack: info.componentStack },
