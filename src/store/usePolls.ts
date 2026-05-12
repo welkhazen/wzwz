@@ -66,7 +66,16 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
   const [extraBatchesUnlocked, setExtraBatchesUnlocked] = useState<number>(() => {
     try {
       const stored = window.localStorage.getItem(`raw.polls.extra-batches.${todayKey}`);
-      return stored !== null ? Number(stored) : 0;
+      const storedValue = stored !== null ? Number(stored) : 0;
+
+      // If extraBatches was never persisted (old sessions), infer it from
+      // how many polls were already answered today so the limit stays consistent.
+      const answeredRaw = window.localStorage.getItem(`raw.polls.daily-answered.${todayKey}`);
+      const answeredIds = answeredRaw ? (JSON.parse(answeredRaw) as string[]) : [];
+      const answeredCount = Array.isArray(answeredIds) ? answeredIds.length : 0;
+      const minBatches = Math.max(0, Math.ceil((answeredCount - DAILY_POLL_LIMIT) / EXTRA_BATCH_SIZE));
+
+      return Math.max(storedValue, minBatches);
     } catch {
       return 0;
     }
