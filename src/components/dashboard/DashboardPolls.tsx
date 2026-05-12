@@ -108,6 +108,16 @@ function PollStat({
   );
 }
 
+function readStoredAnswerHistory(storageKey: string): Record<string, string> {
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 export function DashboardPolls({
   polls,
   votedPolls,
@@ -125,15 +135,8 @@ export function DashboardPolls({
   const answersStorageKey = `raw.poll-history.answers.${userId}`;
   const commentsStorageKey = `raw.poll-history.comments.${userId}`;
   const voteHintStorageKey = `raw.polls.vote-hint-seen.${userId}`;
-  const [answerHistory, setAnswerHistory] = useState<Record<string, string>>(() => {
-    try {
-      const raw = window.localStorage.getItem(`raw.poll-history.answers.${userId}`);
-      const parsed = raw ? (JSON.parse(raw) as Record<string, string>) : {};
-      return parsed && typeof parsed === "object" ? parsed : {};
-    } catch {
-      return {};
-    }
-  });
+  const [loadedAnswersStorageKey, setLoadedAnswersStorageKey] = useState(answersStorageKey);
+  const [answerHistory, setAnswerHistory] = useState<Record<string, string>>(() => readStoredAnswerHistory(answersStorageKey));
   const [historyComments, setHistoryComments] = useState<Record<string, PollHistoryComment[]>>({});
   const [commentDraft, setCommentDraft] = useState("");
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
@@ -141,6 +144,12 @@ export function DashboardPolls({
   const [lockedInsightMessage, setLockedInsightMessage] = useState<string | null>(null);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setLoadedAnswersStorageKey(answersStorageKey);
+    setAnswerHistory(readStoredAnswerHistory(answersStorageKey));
+    setCurrentPollIndex(0);
+  }, [answersStorageKey]);
 
   useEffect(() => {
     try {
@@ -153,8 +162,9 @@ export function DashboardPolls({
   }, [commentsStorageKey]);
 
   useEffect(() => {
+    if (loadedAnswersStorageKey !== answersStorageKey) return;
     window.localStorage.setItem(answersStorageKey, JSON.stringify(answerHistory));
-  }, [answerHistory, answersStorageKey]);
+  }, [answerHistory, answersStorageKey, loadedAnswersStorageKey]);
 
   useEffect(() => {
     window.localStorage.setItem(commentsStorageKey, JSON.stringify(historyComments));
@@ -183,11 +193,13 @@ export function DashboardPolls({
 
   // Once the daily limit is hit, show today's answered polls (capped at dailyPollLimit).
   // While still under the limit, show unseen polls (or answered ones if nothing left to answer).
-  const displayPolls = isDailyPollLimitReached
+  const displayPolls = isDailyPollLimitReached && answeredPolls.length > 0
     ? answeredPolls.slice(0, dailyPollLimit)
     : unseenPolls.length > 0
       ? unseenPolls
-      : answeredPolls;
+      : answeredPolls.length > 0
+        ? answeredPolls
+        : polls;
 
   useEffect(() => {
     if (currentPollIndex >= displayPolls.length && displayPolls.length > 0) {
