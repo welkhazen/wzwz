@@ -123,7 +123,8 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
 
   const voteMutation = useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
-      await submitPollVote(pollId, optionId);
+      if (!userId) return { pollId, optionId };
+      await submitPollVote(pollId, optionId, userId);
       return { pollId, optionId };
     },
     onSuccess: ({ pollId, optionId }) => {
