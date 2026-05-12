@@ -16,6 +16,7 @@ export type AvatarCatalogItem = {
 };
 
 const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v1";
+const FULL_CATALOG_STORAGE_KEY = "raw.avatar.catalog.full.v1";
 const INVENTORY_STORAGE_PREFIX = "raw.avatar.inventory.v1.";
 const SELECTED_STORAGE_PREFIX = "raw.avatar.selected.v1.";
 let avatarBackendMissingTables = false;
@@ -30,9 +31,12 @@ export function consumeAvatarCatalogLocalWriteFailure(): boolean {
 function isMissingAvatarTableError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const maybe = error as { code?: string; message?: string; details?: string; hint?: string };
+  // PGRST204 = column not found in schema cache — not a missing table, don't block future fetches
+  if (maybe.code === "PGRST204") return false;
   if (maybe.code === "PGRST205" || maybe.code === "42P01") return true;
   const haystack = `${maybe.message ?? ""} ${maybe.details ?? ""} ${maybe.hint ?? ""}`.toLowerCase();
-  return haystack.includes("could not find the table") || haystack.includes("does not exist");
+  return haystack.includes("could not find the table") ||
+    (haystack.includes("does not exist") && !haystack.includes("column"));
 }
 
 function markBackendMissingIfNeeded(error: unknown): void {
@@ -42,16 +46,16 @@ function markBackendMissingIfNeeded(error: unknown): void {
 }
 
 const DEFAULT_AVATAR_CATALOG: AvatarCatalogItem[] = [
-  { id: "avatar-1", level: 1, name: "Avatar 1", price: "Free", imageSrc: "/avatars/avatar-1.svg", bg: "#1a1a1a", figure: "#c8c8c8", ring: "#8a8a8a", glow: "none", isActive: true },
-  { id: "avatar-2", level: 2, name: "Avatar 2", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80", isActive: true },
-  { id: "avatar-3", level: 3, name: "Avatar 3", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80", isActive: true },
-  { id: "avatar-4", level: 4, name: "Avatar 4", price: "0", imageSrc: "/avatars/avatar-4.svg", bg: "#0f1f12", figure: "#4ade80", ring: "#22a84a", glow: "#4ade8080", isActive: true },
-  { id: "avatar-5", level: 5, name: "Avatar 5", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#0f7a36", glow: "#16a34a80", isActive: true },
-  { id: "avatar-6", level: 6, name: "Avatar 6", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true },
-  { id: "avatar-7", level: 7, name: "Avatar 7", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#5b2aa8", glow: "#8b5cf680", isActive: true },
-  { id: "avatar-8", level: 8, name: "Avatar 8", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#b0550f", glow: "#f9731680", isActive: true },
-  { id: "avatar-9", level: 9, name: "Avatar 9", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#8a1515", glow: "#dc262680", isActive: true },
-  { id: "avatar-10", level: 10, name: "Avatar 10", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590", isActive: true },
+  { id: "avatar-1", level: 1, name: "Cyborg Prime", price: "Free", imageSrc: "/avatars/avatar-1.svg", bg: "#1a1a1a", figure: "#c8c8c8", ring: "#8a8a8a", glow: "none", isActive: true },
+  { id: "avatar-2", level: 2, name: "Chrome Ghost", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80", isActive: true },
+  { id: "avatar-3", level: 3, name: "Iron Specter", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80", isActive: true },
+  { id: "avatar-4", level: 4, name: "Steampunk Drake", price: "0", imageSrc: "/avatars/avatar-4.svg", bg: "#0f1f12", figure: "#4ade80", ring: "#22a84a", glow: "#4ade8080", isActive: true },
+  { id: "avatar-5", level: 5, name: "Solar Enforcer", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#0f7a36", glow: "#16a34a80", isActive: true },
+  { id: "avatar-6", level: 6, name: "Neon Oracle", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true },
+  { id: "avatar-7", level: 7, name: "Void Phantom", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#5b2aa8", glow: "#8b5cf680", isActive: true },
+  { id: "avatar-8", level: 8, name: "Copper Wraith", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#b0550f", glow: "#f9731680", isActive: true },
+  { id: "avatar-9", level: 9, name: "Inferno Shade", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#8a1515", glow: "#dc262680", isActive: true },
+  { id: "avatar-10", level: 10, name: "Golden Reaper", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590", isActive: true },
 ];
 
 function cloneCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
@@ -130,22 +134,15 @@ export function readAvatarThemesFromCache(): AvatarCatalogItem[] {
   return readAvatarCatalogLocal();
 }
 
-export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
-  if (avatarBackendMissingTables) {
-    return readAvatarCatalogLocal();
-  }
-
+async function refreshAvatarCatalogFromSupabase(): Promise<void> {
   try {
     const { data, error } = await supabase
       .from("avatar_catalog")
-      .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new")
+      .select("*")
       .eq("is_active", true)
       .order("level", { ascending: true });
 
-    if (error) {
-      markBackendMissingIfNeeded(error);
-      return readAvatarCatalogLocal();
-    }
+    if (error) { markBackendMissingIfNeeded(error); return; }
 
     const mapped = (data ?? []).map((row) => ({
       id: row.id,
@@ -158,20 +155,22 @@ export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
       ring: row.ring,
       glow: row.glow,
       isActive: row.is_active,
-      isNew: row.is_new ?? false,
+      isNew: false,
     }));
 
-    if (mapped.length === 0) return readAvatarCatalogLocal();
-    return writeAvatarCatalogLocal(mapped);
-  } catch {
-    return readAvatarCatalogLocal();
-  }
+    if (mapped.length > 0) writeAvatarCatalogLocal(mapped); // dispatches raw:avatar-catalog-updated
+  } catch { /* stay on local cache */ }
+}
+
+export function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
+  if (!avatarBackendMissingTables) void refreshAvatarCatalogFromSupabase();
+  return Promise.resolve(readAvatarCatalogLocal());
 }
 
 export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem[]> {
   const { data, error } = await supabase
     .from("avatar_catalog")
-    .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new")
+    .select("*")
     .eq("is_active", true)
     .order("level", { ascending: true });
 
@@ -191,11 +190,57 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
       ring: row.ring,
       glow: row.glow,
       isActive: row.is_active,
-      isNew: row.is_new ?? false,
+      isNew: false,
     }))
   );
 
   writeAvatarCatalogLocal(mapped);
+  return mapped;
+}
+
+export function readFullAvatarCatalogLocal(): AvatarCatalogItem[] {
+  if (!isBrowser()) return [];
+  try {
+    const raw = window.localStorage.getItem(FULL_CATALOG_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed as AvatarCatalogItem[];
+  } catch {
+    return [];
+  }
+}
+
+function writeFullAvatarCatalogLocal(items: AvatarCatalogItem[]): void {
+  if (!isBrowser()) return;
+  try { window.localStorage.setItem(FULL_CATALOG_STORAGE_KEY, JSON.stringify(items)); } catch { /* ignore */ }
+}
+
+export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
+  const { data, error } = await supabase
+    .from("avatar_catalog")
+    .select("*")
+    .order("level", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message || "Could not load full avatar catalog from Supabase.");
+  }
+
+  const mapped = (data ?? []).map((row, idx) => ({
+    id: row.id,
+    level: idx + 1,
+    name: row.name,
+    price: row.price,
+    imageSrc: row.image_src ?? undefined,
+    bg: row.bg || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].bg,
+    figure: row.figure || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].figure,
+    ring: row.ring || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].ring,
+    glow: row.glow || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].glow,
+    isActive: row.is_active,
+    isNew: false,
+  }));
+
+  if (mapped.length > 0) writeFullAvatarCatalogLocal(mapped);
   return mapped;
 }
 
@@ -223,18 +268,6 @@ export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<Ava
     if (withoutImage.length > 0) {
       const { error } = await supabase.from("avatar_catalog").upsert(withoutImage, { onConflict: "id" });
       if (error) { markBackendMissingIfNeeded(error); return next; }
-    }
-
-    const currentIds = new Set(next.map((item) => item.id));
-    const { data: existingRows, error: existingError } = await supabase.from("avatar_catalog").select("id");
-    if (existingError || !existingRows) {
-      markBackendMissingIfNeeded(existingError);
-      return next;
-    }
-
-    const retiredIds = existingRows.map((row) => row.id).filter((id) => !currentIds.has(id));
-    if (retiredIds.length > 0) {
-      await supabase.from("avatar_catalog").update({ is_active: false }).in("id", retiredIds);
     }
   } catch {
     // Local cache remains the source of truth if Supabase write is unavailable.
@@ -265,23 +298,6 @@ export async function saveAvatarCatalogSupabaseOnly(items: AvatarCatalogItem[]):
   if (withoutImage.length > 0) {
     const { error } = await supabase.from("avatar_catalog").upsert(withoutImage, { onConflict: "id" });
     if (error) throw new Error(error.message || "Could not save avatar catalog to Supabase.");
-  }
-
-  const currentIds = new Set(next.map((item) => item.id));
-  const { data: existingRows, error: existingError } = await supabase.from("avatar_catalog").select("id");
-  if (existingError || !existingRows) {
-    throw new Error(existingError?.message || "Could not verify saved avatar catalog.");
-  }
-
-  const retiredIds = existingRows.map((row) => row.id).filter((id) => !currentIds.has(id));
-  if (retiredIds.length > 0) {
-    const { error: retireError } = await supabase
-      .from("avatar_catalog")
-      .update({ is_active: false })
-      .in("id", retiredIds);
-    if (retireError) {
-      throw new Error(retireError.message || "Could not deactivate removed avatars.");
-    }
   }
 
   return next;

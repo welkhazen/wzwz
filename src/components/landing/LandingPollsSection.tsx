@@ -125,6 +125,7 @@ export function LandingPollsSection() {
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
+  const [waterFilled, setWaterFilled] = useState(false);
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
   const { data: fetchedPolls } = useQuery({
@@ -157,16 +158,6 @@ export function LandingPollsSection() {
   const showComments = !!selected;
   const allComments = [...(SEED_COMMENTS[index] ?? []), ...(extraComments[index] ?? [])];
 
-  const handleSubmitComment = () => {
-    const text = (commentInputs[index] ?? "").trim();
-    if (!text) return;
-    setExtraComments((prev) => ({ ...prev, [index]: [...(prev[index] ?? []), text] }));
-    setCommentInputs((prev) => ({ ...prev, [index]: "" }));
-    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-  };
-
-  const [waterFilled, setWaterFilled] = useState(false);
-
   useEffect(() => {
     if (!selected) { setWaterFilled(false); return; }
     setWaterFilled(false);
@@ -180,6 +171,14 @@ export function LandingPollsSection() {
     },
     [index]
   );
+
+  const handleSubmitComment = () => {
+    const text = (commentInputs[index] ?? "").trim();
+    if (!text) return;
+    setExtraComments((prev) => ({ ...prev, [index]: [...(prev[index] ?? []), text] }));
+    setCommentInputs((prev) => ({ ...prev, [index]: "" }));
+    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+  };
 
   return (
     <LandingSectionShell

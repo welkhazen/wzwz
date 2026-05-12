@@ -5,8 +5,8 @@ import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
-import { AVATARS } from "@/lib/avataridentity";
-import { loadAvatarCatalog } from "@/lib/avatarCatalog";
+import { AVATARS, LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
+import { loadAvatarCatalog, loadAvatarCatalogSupabaseOnly, loadFullAvatarCatalog, readAvatarCatalogLocal, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
@@ -25,12 +25,45 @@ export function AvatarShowcaseSection() {
   const [showMore, setShowMore] = useState(false);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
+  const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
   const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const applyFullThemes = (items: AvatarCatalogItem[]) => {
+    setFullCatalog(items);
+    setAvatarThemes(items.map((item) => ({
+      bg: item.bg, figure: item.figure, ring: item.ring,
+      glow: item.glow, name: item.name, imageSrc: item.imageSrc,
+    })));
+  };
+
   useEffect(() => {
-    loadAvatarCatalog().then(setCatalog).catch(() => {});
+    // Seed LEVEL_THEMES from localStorage cache immediately so avatars render
+    // on the first paint without waiting for a Supabase round-trip.
+    const cached = readFullAvatarCatalogLocal();
+    if (cached.length > 0) applyFullThemes(cached);
+
+    const applyThemes = (items: AvatarCatalogItem[]) => {
+      setCatalog(items);
+      // Never downgrade LEVEL_THEMES to a smaller set once the full catalog
+      // has been loaded — this prevents the race where loadAvatarCatalogSupabaseOnly
+      // (active-only, ~10 items) resolves after loadFullAvatarCatalog (70+ items)
+      // and resets all avatars back to the blue fallback.
+      if (items.length >= LEVEL_THEMES.length) {
+        setAvatarThemes(items.map((item) => ({
+          bg: item.bg, figure: item.figure, ring: item.ring,
+          glow: item.glow, name: item.name, imageSrc: item.imageSrc,
+        })));
+      }
+    };
+    loadAvatarCatalog().then(applyThemes).catch(() => {});
+    loadAvatarCatalogSupabaseOnly().then(applyThemes).catch(() => {});
+    loadFullAvatarCatalog().then(applyFullThemes).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
+    const handler = () => applyThemes(readAvatarCatalogLocal());
+    window.addEventListener("raw:avatar-catalog-updated", handler);
+    return () => window.removeEventListener("raw:avatar-catalog-updated", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
@@ -44,29 +77,29 @@ export function AvatarShowcaseSection() {
   const canNext = true;
 
   function prev() {
-    setStartIndex((i) => (i - 1 + total) % total);
+    setStartIndex((i) => (i - 1 + baseTotal) % baseTotal);
   }
 
   function next() {
-    setStartIndex((i) => (i + 1) % total);
+    setStartIndex((i) => (i + 1) % baseTotal);
   }
 
   function prevDesktop() {
-    setDesktopStart((i) => (i - 8 + total) % total);
+    setDesktopStart((i) => (i - 8 + baseTotal) % baseTotal);
   }
 
   function nextDesktop() {
-    setDesktopStart((i) => (i + 8) % total);
+    setDesktopStart((i) => (i + 8) % baseTotal);
   }
 
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
-    const idx = (startIndex + i) % total;
-    return { avatar: avatarList[idx], index: idx + 1 };
+    const idx = (startIndex + i) % baseTotal;
+    return { avatar: baseAvatars[idx], index: idx + 1 };
   });
 
   const desktopAvatars = Array.from({ length: DESKTOP_COUNT }, (_, i) => {
-    const idx = (desktopStart + i) % total;
-    return { avatar: avatarList[idx], index: idx + 1 };
+    const idx = (desktopStart + i) % baseTotal;
+    return { avatar: baseAvatars[idx], index: idx + 1 };
   });
 
   function AvatarButton({
@@ -205,7 +238,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
             className="grid grid-cols-2 gap-x-2 gap-y-3 overflow-y-auto [scrollbar-width:none] min-[380px]:gap-y-4 [&::-webkit-scrollbar]:hidden"
             style={{ maxHeight: `${646 * 0.48 - 10}px` }}
           >
-            {avatarList.map((avatar, i) => (
+            {baseAvatars.map((avatar, i) => (
               <button
                 key={i + 1}
                 type="button"
@@ -316,6 +349,76 @@ Just like in real life, every person is born with a name, an appearance, and an 
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Expand: full avatar grid ── */}
+      <div className="mx-auto mt-6 w-full max-w-5xl flex flex-col items-center">
+        <button
+          type="button"
+          onClick={() => setShowExpandGrid((v) => !v)}
+          className="group flex flex-col items-center gap-1 outline-none"
+          aria-label={showExpandGrid ? "Collapse avatar grid" : "Expand avatar grid"}
+        >
+          <span className="text-[10px] uppercase tracking-[0.22em] text-raw-silver/30 group-hover:text-raw-gold/60 transition-colors duration-300">
+            {showExpandGrid ? "hide" : "explore all"}
+          </span>
+          <motion.div
+            animate={{ y: showExpandGrid ? 0 : [0, 6, 0] }}
+            transition={showExpandGrid ? { duration: 0.2 } : { repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+          >
+            <motion.div animate={{ rotate: showExpandGrid ? 180 : 0 }} transition={{ duration: 0.3 }}>
+              <ChevronDown className="h-6 w-6 text-raw-silver/30 group-hover:text-raw-gold/70 transition-colors duration-300" />
+            </motion.div>
+          </motion.div>
+        </button>
+
+        <AnimatePresence>
+          {showExpandGrid && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden w-full"
+            >
+              <div
+                className="relative mt-5 rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-6 sm:p-8"
+                style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
+              >
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+                <p className="mb-6 text-center font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60">
+                  All Avatars
+                </p>
+                <div className="grid grid-cols-4 gap-4 place-items-center sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+                  {extendedAvatars.map(({ avatar, themeIndex }) => (
+                    <button
+                      key={avatar.id ?? themeIndex}
+                      type="button"
+                      onClick={() => { setAvatarIndex(themeIndex); setPreviewIndex(themeIndex); }}
+                      onMouseEnter={() => setPreviewIndex(themeIndex)}
+                      onMouseLeave={() => setPreviewIndex(avatarIndex)}
+                      className="group flex flex-col items-center gap-1.5 outline-none"
+                      aria-label={`Select ${avatar.name}`}
+                    >
+                      <div
+                        className="rounded-full transition-all duration-300 group-hover:scale-110"
+                        style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
+                      >
+                        <AvatarFigure avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
+                      </div>
+                      <span
+                        className="text-center font-display text-[8px] uppercase tracking-wide transition-colors duration-200"
+                        style={{ color: avatarIndex === themeIndex ? "#F1C42D" : "rgba(255,255,255,0.3)" }}
+                      >
+                        {avatar.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Show More: new avatars drop-down ── */}

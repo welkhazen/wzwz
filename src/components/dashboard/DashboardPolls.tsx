@@ -115,6 +115,8 @@ export function DashboardPolls({
   const [commentDraft, setCommentDraft] = useState("");
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
