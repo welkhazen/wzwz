@@ -180,7 +180,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
           className="rounded-full opacity-20"
           style={{
             width: glowSize, height: glowSize,
-            background: "radial-gradient(circle, rgba(241,196,45,0.18) 0%, rgba(241,196,45,0.05) 45%, transparent 70%)",
+            background: "radial-gradient(circle, hsl(var(--primary) / 0.18) 0%, hsl(var(--primary) / 0.05) 45%, transparent 70%)",
           }}
         />
       </div>
@@ -189,17 +189,17 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
         <div className="absolute flex h-full w-full items-center justify-center" ref={orbitRef}>
 
           {/* Outer ring */}
-          <div className="absolute rounded-full" style={{ width: outerRing, height: outerRing, border: "1px solid rgba(241,196,45,0.2)", boxShadow: "0 0 18px rgba(241,196,45,0.04)" }} />
+          <div className="absolute rounded-full" style={{ width: outerRing, height: outerRing, border: "1px solid hsl(var(--primary) / 0.2)", boxShadow: "0 0 18px hsl(var(--primary) / 0.04)" }} />
           {/* Inner dashed ring */}
-          <div className="absolute rounded-full" style={{ width: innerRing, height: innerRing, border: "1px dashed rgba(241,196,45,0.1)" }} />
+          <div className="absolute rounded-full" style={{ width: innerRing, height: innerRing, border: "1px dashed hsl(var(--primary) / 0.1)" }} />
 
           {/* Center orb */}
           <div className={`absolute z-10 flex items-center justify-center ${isCompact ? "h-[72px] w-[72px]" : "h-[106px] w-[106px]"}`}>
-            <div className="absolute animate-ping rounded-full" style={{ width: isCompact ? 96 : 136, height: isCompact ? 96 : 136, border: "1px solid rgba(241,196,45,0.16)", animationDuration: "3s" }} />
+            <div className="absolute animate-ping rounded-full" style={{ width: isCompact ? 96 : 136, height: isCompact ? 96 : 136, border: "1px solid hsl(var(--primary) / 0.16)", animationDuration: "3s" }} />
             <img
               src="/raw-logo-96.png"
               alt="raW"
-              className={`object-contain drop-shadow-[0_0_16px_rgba(241,196,45,0.35)] ${isCompact ? "h-[72px] w-[72px]" : "h-[106px] w-[106px]"}`}
+              className={`object-contain drop-shadow-[0_0_16px_hsl(var(--primary) / 0.35)] ${isCompact ? "h-[72px] w-[72px]" : "h-[106px] w-[106px]"}`}
               style={{ animation: "logoFlip 3s ease-in-out infinite" }}
             />
           </div>
@@ -226,7 +226,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                 onClick={(e) => { e.stopPropagation(); toggleItem(item.id); }}
               >
                 {(isExpanded || isRelated) && (
-                  <div className="absolute -inset-4 rounded-full animate-pulse" style={{ background: "radial-gradient(circle, rgba(241,196,45,0.12) 0%, transparent 70%)" }} />
+                  <div className="absolute -inset-4 rounded-full animate-pulse" style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)" }} />
                 )}
 
                 {/* Icon circle */}
@@ -234,23 +234,23 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                   className={`${isTinyPhone ? "h-8 w-8" : "h-10 w-10"} rounded-full flex items-center justify-center ${isPulsing ? "animate-pulse" : ""}`}
                   style={{
                     background: isExpanded
-                      ? "linear-gradient(135deg, #F1C42D, #d4a017)"
+                      ? "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))"
                       : isRelated
-                        ? (isLight ? "rgba(180,140,20,0.15)" : "rgba(241,196,45,0.18)")
+                        ? "hsl(var(--primary) / 0.18)"
                         : (isLight ? "rgba(255,255,255,0.92)" : "rgba(8,8,8,0.88)"),
                     border: isExpanded
-                      ? "2px solid #F1C42D"
+                      ? "2px solid hsl(var(--primary))"
                       : isRelated
-                        ? "2px solid rgba(241,196,45,0.55)"
-                        : (isLight ? "1.5px solid rgba(120,120,120,0.4)" : "1px solid rgba(180,180,180,0.18)"),
+                        ? "2px solid hsl(var(--primary) / 0.55)"
+                        : "1px solid hsl(var(--primary) / 0.35)",
                     boxShadow: isExpanded
-                      ? "0 0 18px rgba(241,196,45,0.55), 0 0 36px rgba(241,196,45,0.2)"
+                      ? "0 0 18px hsl(var(--primary) / 0.55), 0 0 36px hsl(var(--primary) / 0.2)"
                       : isRelated
-                        ? "0 0 12px rgba(241,196,45,0.3)"
-                        : "none",
+                        ? "0 0 12px hsl(var(--primary) / 0.3)"
+                        : "0 0 6px hsl(var(--primary) / 0.15)",
                     transform: isExpanded ? "scale(1.4)" : "scale(1)",
                     transition: "transform 0.3s, background 0.3s, border 0.3s, box-shadow 0.3s",
-                    color: isExpanded ? "#0a0a0a" : (isLight ? "rgba(80,80,80,0.7)" : "rgba(180,180,180,0.55)"),
+                    color: isExpanded ? "#0a0a0a" : (isLight ? "rgba(80,80,80,0.7)" : "hsl(var(--primary) / 0.65)"),
                   }}
                 >
                   <Icon size={isTinyPhone ? 13 : 15} />
@@ -267,11 +267,11 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                     fontWeight: 700,
                     color: isLight
                       ? (isExpanded ? "#000000" : "rgba(0,0,0,0.45)")
-                      : (isExpanded ? "#F1C42D" : "rgba(180,180,180,0.5)"),
+                      : (isExpanded ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.55)"),
                     textShadow: isLight
                       ? "none"
                       : (isExpanded
-                          ? "0 0 10px rgba(241,196,45,0.7), 0 0 20px rgba(241,196,45,0.4)"
+                          ? "0 0 10px hsl(var(--primary) / 0.7), 0 0 20px hsl(var(--primary) / 0.4)"
                           : "0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9)"),
                   }}
                 >
@@ -297,7 +297,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
               background: isLight ? "#fffbf0" : "#080808",
               boxShadow: isLight
                 ? "0 0 0 1px rgba(180,140,20,0.18), 0 12px 40px rgba(0,0,0,0.12)"
-                : "0 0 0 1px rgba(241,196,45,0.12), 0 12px 40px rgba(0,0,0,0.9), 0 0 24px rgba(241,196,45,0.06)",
+                : "0 0 0 1px hsl(var(--primary) / 0.12), 0 12px 40px rgba(0,0,0,0.9), 0 0 24px hsl(var(--primary) / 0.06)",
             }}
           >
             <button
