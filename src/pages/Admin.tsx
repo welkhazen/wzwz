@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { ArrowLeft, Ban, BellRing, CheckCircle2, Copy, Database, Download, Flag, GripVertical, Lock, Plus, Scissors, Shield, Trash2, Upload, Users, XCircle } from "lucide-react";
+import { RARITY_CONFIG, RARITY_ORDER, type AvatarRarity } from "@/lib/avatarRarity";
 import { fetchPollsFromSupabase, insertPollToSupabase, deletePollFromSupabase, testSupabaseConnection } from "@/lib/supabasePolls";
 import { fetchCommunityRequests, updateCommunityRequestStatus } from "@/backend/supabase/controllers/communityRequestController";
 import { createCommunityFromRequest } from "@/backend/supabase/controllers/communityController";
@@ -2657,7 +2658,7 @@ export default function Admin() {
                     {avatarCatalogDraft.map((item, index) => (
                       <div key={item.id} className="space-y-2">
                         {renderInsertPeek(index + 1)}
-                        <div className={`grid gap-2 rounded-xl border bg-raw-black/30 p-2 sm:grid-cols-[72px_1fr_120px_120px_92px] ${clampedPublishInsertAt === index + 1 ? "border-raw-gold/35" : "border-raw-border/20"}`}>
+                        <div className={`grid gap-2 rounded-xl border bg-raw-black/30 p-2 sm:grid-cols-[72px_1fr_120px_120px_140px_92px] ${clampedPublishInsertAt === index + 1 ? "border-raw-gold/35" : "border-raw-border/20"}`}>
                           <img src={item.imageSrc || ""} alt={item.name} className="h-16 w-16 rounded-lg border border-raw-border/20 bg-raw-black/45 object-contain" />
                           <div className="grid gap-2 sm:grid-cols-2">
                             <input
@@ -2712,6 +2713,28 @@ export default function Admin() {
                             className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-xs text-raw-text outline-none focus:border-raw-gold/40"
                             placeholder="avatar-id"
                           />
+                          <div className="flex flex-col gap-1">
+                            <select
+                              value={item.rarity ?? "common"}
+                              onChange={(event) => updateAvatarCatalogDraftItem(item.id, { rarity: event.target.value as AvatarRarity })}
+                              className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2 py-2 text-xs text-raw-text outline-none focus:border-raw-gold/40"
+                              style={{ borderLeftColor: RARITY_CONFIG[item.rarity ?? "common"].color, borderLeftWidth: 3 }}
+                            >
+                              {RARITY_ORDER.map((r) => (
+                                <option key={r} value={r}>{RARITY_CONFIG[r].label}</option>
+                              ))}
+                            </select>
+                            <div className="flex items-center gap-1">
+                              <span className="shrink-0 text-[10px] text-raw-silver/45">1 in</span>
+                              <input
+                                type="number"
+                                min={1}
+                                value={item.dropWeight ?? 100}
+                                onChange={(event) => updateAvatarCatalogDraftItem(item.id, { dropWeight: Math.max(1, Number(event.target.value) || 1) })}
+                                className="w-full rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2 py-1.5 text-xs text-raw-text outline-none focus:border-raw-gold/40"
+                              />
+                            </div>
+                          </div>
                           <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"

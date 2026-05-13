@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import type { AvatarRarity } from "@/lib/avatarRarity";
 
 export type AvatarCatalogItem = {
   id: string;
@@ -13,6 +14,8 @@ export type AvatarCatalogItem = {
   isActive?: boolean;
   isNew?: boolean;
   showIn?: "landing" | "app" | "both";
+  rarity?: AvatarRarity;
+  dropWeight?: number;
 };
 
 const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v1";
@@ -155,6 +158,8 @@ async function refreshAvatarCatalogFromSupabase(): Promise<void> {
       glow: row.glow,
       isActive: row.is_active,
       isNew: false,
+      rarity: row.rarity ?? "common",
+      dropWeight: row.drop_weight ?? 100,
     }));
 
     if (mapped.length > 0) writeAvatarCatalogLocal(mapped); // dispatches raw:avatar-catalog-updated
@@ -190,6 +195,8 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
       glow: row.glow,
       isActive: row.is_active,
       isNew: false,
+      rarity: row.rarity ?? "common",
+      dropWeight: row.drop_weight ?? 100,
     }))
   );
 
@@ -238,6 +245,8 @@ export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
     glow: row.glow || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].glow,
     isActive: row.is_active,
     isNew: false,
+    rarity: row.rarity ?? "common",
+    dropWeight: row.drop_weight ?? 100,
   }));
 
   if (mapped.length > 0) writeFullAvatarCatalogLocal(mapped);
@@ -270,6 +279,8 @@ export async function loadAvatarCatalogRange(startLevel: number, endLevel: numbe
       glow: row.glow || fallback.glow,
       isActive: row.is_active,
       isNew: row.is_new ?? false,
+      rarity: row.rarity ?? "common",
+      dropWeight: row.drop_weight ?? 100,
     };
   });
 }
@@ -285,6 +296,7 @@ export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<Ava
     const baseRow = (item: AvatarCatalogItem) => ({
       id: item.id, level: item.level, name: item.name, price: item.price,
       bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, is_active: true, is_new: item.isNew ?? false,
+      rarity: item.rarity ?? "common", drop_weight: item.dropWeight ?? 100,
     });
     const withImage = next.filter((i) => i.imageSrc && !i.imageSrc.startsWith("data:"))
       .map((i) => ({ ...baseRow(i), image_src: i.imageSrc! }));
@@ -311,6 +323,7 @@ export async function saveAvatarCatalogSupabaseOnly(items: AvatarCatalogItem[]):
   const baseRow = (item: AvatarCatalogItem) => ({
     id: item.id, level: item.level, name: item.name, price: item.price,
     bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, is_active: true, is_new: item.isNew ?? false,
+    rarity: item.rarity ?? "common", drop_weight: item.dropWeight ?? 100,
   });
   // Split into two batches: rows with a real image URL vs rows without (or with legacy base64).
   // PostgREST requires all rows in a batch to share the same column set, and base64 data URLs
