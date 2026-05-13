@@ -43,12 +43,12 @@ function getTextPosition(index: number, total: number, radius: number): { x: num
   const angle = 360 / total;
   const center = index * angle + angle / 2 - 90;
   const rad = (center * Math.PI) / 180;
-  const textRadius = radius * 0.68;
+  const textRadius = radius * 0.72;
 
   return {
     x: radius + textRadius * Math.cos(rad),
     y: radius + textRadius * Math.sin(rad),
-    rotation: center + 90,
+    rotation: center,
   };
 }
 
