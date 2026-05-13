@@ -231,6 +231,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
   const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
   const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)) - 1) / AVATAR_PAGE_SIZE));
   const answeredCount = onboardingPolls.filter((poll) => onboardingAnsweredPollIds.has(poll.id)).length;
+  const phonePreviewRef = useRef<HTMLDivElement>(null);
   const startedFiredRef = useRef(false);
   const stepStartTimeRef = useRef(Date.now());
   const currentPoll = onboardingPolls[currentPollIndex];
@@ -372,6 +373,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                           type="button"
                           onClick={() => {
                             setPreviewAvatarIndex(index);
+                            phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
                             if (isFree) {
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
                               onAvatarChange(index);
@@ -456,6 +458,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                             type="button"
                             onClick={() => {
                               setPreviewAvatarIndex(index);
+                              phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
                             }}
                             className="group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
@@ -482,7 +485,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-start md:justify-center">
+                <div ref={phonePreviewRef} className="flex flex-col items-center justify-start md:justify-center">
                   <div className="h-[360px] w-[157px] overflow-visible md:hidden">
                     <div
                       style={{
