@@ -194,10 +194,17 @@ export function DashboardHome({
               View All <ChevronRight className="size-4" />
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {picks.map((community) => (
-              <CommunityCard key={community.id} community={community} onOpenCommunity={onOpenCommunity} />
-            ))}
+          <div className="relative">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 pointer-events-none select-none opacity-40 blur-[2px]" aria-hidden="true" inert={true}>
+              {picks.map((community) => (
+                <CommunityCard key={community.id} community={community} onOpenCommunity={onOpenCommunity} />
+              ))}
+            </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" role="status" aria-live="polite">
+              <span className="rounded-full border border-raw-gold/40 bg-raw-black/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-raw-gold backdrop-blur-sm">
+                Coming Soon
+              </span>
+            </div>
           </div>
         </section>
       )}
