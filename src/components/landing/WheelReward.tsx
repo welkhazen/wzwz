@@ -104,18 +104,11 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
               </span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-raw-text/75">
-              Claim this avatar now as an early access gift from raW to you.
+              This avatar has been automatically added to your inventory as an early access gift from raW.
             </p>
-            <button
-              type="button"
-              onClick={() => {
-                track("landing_cta_clicked", { cta_id: "avatar_claim", cta_text: "Claim My Avatar", source_section: "wheel" });
-                onSignupClick();
-              }}
-              className="mt-4 w-full rounded-full bg-raw-gold px-6 py-3 text-sm font-bold text-raw-black transition-all hover:bg-raw-gold/90 hover:shadow-lg hover:shadow-raw-gold/20"
-            >
-              Claim My Avatar
-            </button>
+            <p className="mt-2 text-[11px] text-raw-silver/45">
+              You'll find it waiting in your profile when you join.
+            </p>
           </div>
         )}
       </div>

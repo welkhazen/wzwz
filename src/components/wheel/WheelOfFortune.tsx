@@ -249,7 +249,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, disabled = false, prizeWeigh
             : "bg-raw-gold text-raw-black hover:scale-105 hover:shadow-[0_0_30px_rgb(var(--raw-accent)/0.3)] active:scale-95"
         }`}
       >
-        {isSpinning ? "Spinning..." : disabled ? "Come Back Tomorrow" : "Spin"}
+        {isSpinning ? "Spinning..." : disabled ? "Spin Complete" : "Spin"}
       </button>
     </div>
   );
