@@ -180,7 +180,7 @@ export function LandingPollsSection() {
     if (!text) return;
     setExtraComments((prev) => ({ ...prev, [index]: [...(prev[index] ?? []), text] }));
     setCommentInputs((prev) => ({ ...prev, [index]: "" }));
-    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
   };
 
   return (
