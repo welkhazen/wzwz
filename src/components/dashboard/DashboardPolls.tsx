@@ -404,11 +404,12 @@ export function DashboardPolls({
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
       {lockedInsightMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm" onClick={() => setLockedInsightMessage(null)}>
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="locked-insight-title"
+            onClick={(e) => e.stopPropagation()}
             className={`w-full max-w-sm border p-5 shadow-[0_18px_70px_rgba(0,0,0,0.45)] ${
               isLightMode ? "border-slate-300 bg-white text-slate-900" : "border-raw-gold/35 bg-raw-black text-raw-text"
             }`}
