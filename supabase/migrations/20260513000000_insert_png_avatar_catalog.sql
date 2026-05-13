@@ -8,7 +8,7 @@
 --   img_4756_3 → arctic cyan
 --   img_4764_1 → solar gold
 --
--- Levels 11-69 (SVG avatars occupy 1-10).
+-- Levels 11-71 (SVG avatars occupy 1-10).
 
 INSERT INTO avatar_catalog (id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new, show_in) VALUES
 
