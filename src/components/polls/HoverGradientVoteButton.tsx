@@ -63,9 +63,12 @@ export function HoverGradientVoteButton({
   }, [answered]);
 
   const isPrimary = themeHue === "primary";
-  const borderGradient = isPrimary
-    ? "linear-gradient(120deg, hsl(var(--primary) / 0.35), hsl(var(--primary) / 1), hsl(var(--ring) / 0.5))"
-    : "linear-gradient(120deg, rgba(230,230,230,0.28), rgba(240,240,240,0.9), rgba(170,170,170,0.36))";
+  const dimmed = answered && !selected;
+  const borderGradient = dimmed
+    ? "linear-gradient(120deg, rgba(60,60,60,0.4), rgba(80,80,80,0.5), rgba(60,60,60,0.4))"
+    : isPrimary
+      ? "linear-gradient(120deg, hsl(var(--primary) / 0.35), hsl(var(--primary) / 1), hsl(var(--ring) / 0.5))"
+      : "linear-gradient(120deg, rgba(230,230,230,0.28), rgba(240,240,240,0.9), rgba(170,170,170,0.36))";
 
   const fillGradient = isPrimary
     ? align === "right"
@@ -86,6 +89,9 @@ export function HoverGradientVoteButton({
       )}
       style={{
         background: borderGradient,
+        boxShadow: selected
+          ? "0 0 24px hsl(var(--primary) / 0.55), 0 0 48px hsl(var(--primary) / 0.28)"
+          : dimmed ? "none" : "0 0 12px hsl(var(--primary) / 0.12)",
       }}
     >
       <span className="absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" />
