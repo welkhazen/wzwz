@@ -726,9 +726,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                             className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors sm:px-3 ${
                               isSelected
                                 ? "border-raw-gold/80 bg-raw-gold/15 text-raw-gold"
-                                : isSelectionDisabled
-                                  ? "border-raw-border/35 text-raw-silver/35"
-                                  : "border-raw-border/50 text-raw-gold/85 group-hover:border-raw-gold/45"
+                                : "border-raw-border/50 text-raw-gold/85 group-hover:border-raw-gold/45"
                             }`}
                           >
                             {isSelected ? "✓ Selected" : "Enter Circle"}
