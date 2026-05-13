@@ -321,7 +321,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
 
             <p className={`text-[13px] leading-relaxed ${isLight ? "text-stone-700" : "text-white/75"}`}>{activeItem.content}</p>
 
-            <div className="mt-3 border-t border-raw-gold/10 pt-3 flex justify-between gap-2">
+            {timelineData.length > 1 && <div className="mt-3 border-t border-raw-gold/10 pt-3 flex justify-between gap-2">
               <button
                 type="button"
                 aria-label="Previous"
@@ -348,7 +348,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
               >
                 <ChevronRight size={15} />
               </button>
-            </div>
+            </div>}
           </div>
         );
 
