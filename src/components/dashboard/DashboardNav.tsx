@@ -127,7 +127,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
 
         {/* Right: token + bell + avatar */}
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-          <TokenBalanceButton />
+          <TokenBalanceButton username={username} />
           <div className="relative" ref={notifRef}>
             <button
               type="button"

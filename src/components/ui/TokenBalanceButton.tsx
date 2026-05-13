@@ -3,10 +3,17 @@ import tokenImg from "@/assets/tokens.png";
 
 interface TokenBalanceButtonProps {
   balance?: number | string;
-  symbol?: string;
+  username?: string;
 }
 
-export function TokenBalanceButton({ balance = 0, symbol = "WZWZ" }: TokenBalanceButtonProps) {
+function deriveSymbol(username?: string): string {
+  if (!username) return "WZWZ";
+  const clean = username.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  return clean.slice(0, 5) || "WZWZ";
+}
+
+export function TokenBalanceButton({ balance = 0, username }: TokenBalanceButtonProps) {
+  const symbol = deriveSymbol(username);
   const [open, setOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const spinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
