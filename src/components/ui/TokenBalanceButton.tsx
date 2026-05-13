@@ -1,19 +1,9 @@
 import { useRef, useState } from "react";
 import tokenImg from "@/assets/tokens.png";
+import { useRawStore } from "@/store/useRawStore";
 
-interface TokenBalanceButtonProps {
-  balance?: number | string;
-  username?: string;
-}
-
-function deriveSymbol(username?: string): string {
-  if (!username) return "WZWZ";
-  const clean = username.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-  return clean.slice(0, 5) || "WZWZ";
-}
-
-export function TokenBalanceButton({ balance = 0, username }: TokenBalanceButtonProps) {
-  const symbol = deriveSymbol(username);
+export function TokenBalanceButton() {
+  const balance = useRawStore((s) => s.tokenBalance);
   const [open, setOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const spinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -43,7 +33,7 @@ export function TokenBalanceButton({ balance = 0, username }: TokenBalanceButton
         }
         @keyframes balance-text-in {
           from { opacity: 0; max-width: 0; }
-          to   { opacity: 1; max-width: 120px; }
+          to   { opacity: 1; max-width: 80px; }
         }
         .balance-text-in {
           animation: balance-text-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -52,7 +42,6 @@ export function TokenBalanceButton({ balance = 0, username }: TokenBalanceButton
         }
       `}</style>
 
-      {/* Pill wraps the token icon + optional balance text — no duplicate icon */}
       <button
         type="button"
         onClick={handleClick}
@@ -68,7 +57,7 @@ export function TokenBalanceButton({ balance = 0, username }: TokenBalanceButton
       >
         <img
           src={tokenImg}
-          alt="WZWZ token"
+          alt="Token"
           width={26}
           height={26}
           draggable={false}
@@ -77,7 +66,7 @@ export function TokenBalanceButton({ balance = 0, username }: TokenBalanceButton
         />
         {open && !spinning && (
           <span className="balance-text-in font-display text-xs tracking-wide text-raw-gold">
-            {balance} {symbol}
+            {balance}
           </span>
         )}
       </button>
