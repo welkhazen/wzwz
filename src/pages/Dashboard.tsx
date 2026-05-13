@@ -2,7 +2,7 @@ import { FloatingDock } from "@/components/ui/floating-dock";
 import { useEffect, useMemo, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
-import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, Wallet, LogOut, Shield, Trophy, Sparkles } from "lucide-react";
+import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles } from "lucide-react";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -321,13 +321,6 @@ export default function Dashboard({
             href: "#",
             onClick: () => handleTabChange("inventory"),
             active: !isHome && activeTab === "inventory",
-          },
-          {
-            title: "Billing",
-            icon: <Wallet className="h-5 w-5" />,
-            href: "#",
-            onClick: () => handleTabChange("wallet"),
-            active: !isHome && activeTab === "wallet",
           },
           ...(user.role === "admin" ? [{
             title: "Admin",
