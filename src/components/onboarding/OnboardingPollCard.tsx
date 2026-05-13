@@ -124,8 +124,8 @@ export function OnboardingPollCard({
   const opt1Percent = totalVotes > 0 ? Math.round(((responseStats[opt1] ?? 0) / totalVotes) * 100) : 50;
 
   const isAnswered = !!selectedOption;
-  const animOpt0 = useAnimatedPercent(opt0Percent, { enabled: isAnswered, durationMs: 800 });
-  const animOpt1 = useAnimatedPercent(opt1Percent, { enabled: isAnswered, durationMs: 800 });
+  const animOpt0 = useAnimatedPercent(opt0Percent, { enabled: isAnswered, durationMs: 900 });
+  const animOpt1 = useAnimatedPercent(opt1Percent, { enabled: isAnswered, durationMs: 900 });
 
   useEffect(() => {
     if (!selectedOption) { setWaterFilled(false); return; }
@@ -276,7 +276,7 @@ export function OnboardingPollCard({
                     handleVote(opt0);
                   }}
                   aria-label={`Vote ${opt0}`}
-                  className={`group relative overflow-hidden transition active:scale-95 disabled:cursor-not-allowed ${selectedOption ? "h-16" : "h-12"}`}
+                  className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
                   style={{ clipPath: BUTTON_CLIP }}
                 >
                   <span
@@ -312,15 +312,15 @@ export function OnboardingPollCard({
                     </div>
                   )}
                   <span
-                    className="relative z-10 flex h-full w-full flex-col items-center justify-center leading-none"
+                    className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-sm font-semibold tracking-wide"
                     style={{
                       color: selectedOption ? (selectedOption === opt0 ? "#FFFFFF" : "rgba(255,255,255,0.55)") : "#EBEBEB",
                       textShadow: selectedOption === opt0 ? "0 0 10px rgba(255,255,255,0.9)" : undefined,
                       transition: "color 0.4s ease",
                     }}
                   >
-                    {selectedOption && <span className="text-lg font-semibold leading-none">{animOpt0}%</span>}
-                    <span className="truncate max-w-[70px] text-sm font-semibold tracking-wide">{opt0}</span>
+                    <span className="truncate max-w-[70px]">{opt0}</span>
+                    {selectedOption && <span className="shrink-0 font-bold">{animOpt0}%</span>}
                   </span>
                 </button>
 
@@ -333,7 +333,7 @@ export function OnboardingPollCard({
                     handleVote(opt1);
                   }}
                   aria-label={`Vote ${opt1}`}
-                  className={`group relative overflow-hidden transition active:scale-95 disabled:cursor-not-allowed ${selectedOption ? "h-16" : "h-12"}`}
+                  className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
                   style={{ clipPath: BUTTON_CLIP }}
                 >
                   <span
@@ -369,15 +369,15 @@ export function OnboardingPollCard({
                     </div>
                   )}
                   <span
-                    className="relative z-10 flex h-full w-full flex-col items-center justify-center leading-none"
+                    className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-sm font-semibold tracking-wide"
                     style={{
                       color: selectedOption ? (selectedOption === opt1 ? "#FFFFFF" : "rgba(255,255,255,0.55)") : "#F1C42D",
                       textShadow: selectedOption === opt1 ? "0 0 10px rgba(241,196,45,1)" : undefined,
                       transition: "color 0.4s ease",
                     }}
                   >
-                    {selectedOption && <span className="text-lg font-semibold leading-none">{animOpt1}%</span>}
-                    <span className="truncate max-w-[70px] text-sm font-semibold tracking-wide">{opt1}</span>
+                    <span className="truncate max-w-[70px]">{opt1}</span>
+                    {selectedOption && <span className="shrink-0 font-bold">{animOpt1}%</span>}
                   </span>
                 </button>
               </div>
