@@ -180,7 +180,7 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
 
     const xpMatch = prize.id.match(/^xp-(\d+)/);
     if (xpMatch && onAwardXP) {
-      void onAwardXP(parseInt(xpMatch[1], 10));
+      void onAwardXP(Number.parseInt(xpMatch[1], 10)).catch(() => {});
     }
   };
 
