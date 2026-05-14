@@ -95,7 +95,7 @@ export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps)
   const currentPoll = polls[index];
   const selected = answers[index];
   const isLastPoll = index === total - 1;
-  const showComments = !!selected;
+  const showComments = !!selected && !isLastPoll;
   const allComments = [...(SEED_COMMENTS[index] ?? []), ...(extraComments[index] ?? [])];
 
   const handleAnswer = useCallback(
