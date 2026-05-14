@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Moon, Sun, Palette } from "lucide-react";
+import { Menu, X, Moon, Sun, Palette, Sunrise } from "lucide-react";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 import { track } from "@/lib/analytics";
 import { useTheme } from "@/providers/useTheme";
@@ -19,13 +19,14 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
   const { mode, setMode } = useTheme();
   const isLightMode = mode === "light";
   const [navVisible, setNavVisible] = useState(true);
-  const modeOptions: { mode: ThemeMode; label: string; icon: typeof Moon; position: string }[] = [
-    { mode: "dark", label: "Dark", icon: Moon },
-    { mode: "dusk", label: "Dusk", icon: Palette },
-    { mode: "light", label: "Light", icon: Sun },
+  const modeOptions: { mode: ThemeMode; label: string; shortLabel: string; icon: typeof Moon; position: string }[] = [
+    { mode: "dark", label: "Dark", shortLabel: "D", icon: Moon },
+    { mode: "dusk", label: "Dusk", shortLabel: "Du", icon: Palette },
+    { mode: "dawn", label: "Dawn", shortLabel: "Da", icon: Sunrise },
+    { mode: "light", label: "Light", shortLabel: "L", icon: Sun },
   ].map((option, index) => ({
     ...option,
-    position: ["translate-x-1", "translate-x-[1.875rem]", "translate-x-[3.5rem]"][index],
+    position: ["translate-x-1", "translate-x-[1.75rem]", "translate-x-[3.125rem]", "translate-x-[4.5rem]"][index],
   }));
   const currentModeIndex = Math.max(0, modeOptions.findIndex((option) => option.mode === mode));
   const currentMode = modeOptions[currentModeIndex];
@@ -127,25 +128,27 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
               <button
                 type="button"
                 onClick={cycleThemeMode}
-                className={`relative h-8 w-[5.5rem] shrink-0 rounded-full border transition-colors ${
+                className={`relative h-8 w-[6.5rem] shrink-0 rounded-full border transition-colors ${
                   isLightMode
                     ? "border-slate-300 bg-white/90"
                     : "border-raw-border/40 bg-raw-surface/60"
                 }`}
                 aria-label={`Theme mode: ${currentMode.label}`}
               >
-                <span className="absolute left-0 top-1/2 flex w-full -translate-y-1/2 justify-between px-2">
+                <span className="absolute inset-0 grid grid-cols-4 items-center px-1 text-[9px] font-semibold">
                   {modeOptions.map((option) => (
                     <span
                       key={option.mode}
-                      className={`h-1 w-1 rounded-full transition-colors ${
+                      className={`flex h-6 items-center justify-center rounded-full transition-colors ${
                         option.mode === mode
-                          ? "bg-transparent"
+                          ? "text-transparent"
                           : isLightMode
-                            ? "bg-slate-400/45"
-                            : "bg-raw-silver/35"
+                            ? "text-slate-500"
+                            : "text-raw-silver/45"
                       }`}
-                    />
+                    >
+                      {option.shortLabel}
+                    </span>
                   ))}
                 </span>
                 <span
