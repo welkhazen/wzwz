@@ -50,7 +50,11 @@ const SEED_COMMENTS: Record<number, string[]> = {
 const COMMENT_CLIP =
   "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)";
 
-export function LandingPollsSection() {
+interface LandingPollsSectionProps {
+  onSignupClick: () => void;
+}
+
+export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps) {
   const { mode } = useTheme();
   const isLight = mode === "light";
   const sectionRef = useTrackSectionView("polls");
@@ -90,7 +94,8 @@ export function LandingPollsSection() {
   const canNext = index < total - 1;
   const currentPoll = polls[index];
   const selected = answers[index];
-  const showComments = !!selected;
+  const isLastPoll = index === total - 1;
+  const showComments = !!selected && !isLastPoll;
   const allComments = [...(SEED_COMMENTS[index] ?? []), ...(extraComments[index] ?? [])];
 
   const handleAnswer = useCallback(
@@ -148,7 +153,7 @@ export function LandingPollsSection() {
             onClick={() => canPrev && setIndex((i) => i - 1)}
             disabled={!canPrev}
             aria-label="Previous question"
-            className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-[0_0_18px_rgb(var(--raw-accent)/0.25)] transition hover:bg-raw-gold/10 disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
+            className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-none transition hover:bg-black/75 hover:shadow-none focus:shadow-none focus-visible:shadow-none disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
           </button>
@@ -170,6 +175,41 @@ export function LandingPollsSection() {
                 showHint
                 onVote={(optionId) => handleAnswer(optionId === "yes" ? "yes" : "no")}
               />
+              {isLastPoll && selected && (
+                <div
+                  className="absolute left-1/2 top-20 z-20 w-[min(19rem,calc(100%-2rem))] -translate-x-1/2 p-[1px]"
+                  style={{
+                    clipPath: COMMENT_CLIP,
+                    background:
+                      "linear-gradient(160deg, rgb(var(--raw-accent) / 0.35) 0%, rgb(var(--raw-accent) / 0.08) 50%, rgb(var(--raw-accent) / 0.25) 100%)",
+                    boxShadow: "0 8px 32px rgb(var(--raw-accent) / 0.1)",
+                  }}
+                >
+                  <div
+                    className="px-4 py-4 text-center"
+                    style={{
+                      clipPath: COMMENT_CLIP,
+                      background: isLight
+                        ? "linear-gradient(165deg, #fdfaf0 0%, #f5f0e0 100%)"
+                        : "linear-gradient(165deg, #111111 0%, #070707 100%)",
+                    }}
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-raw-gold/70">
+                      Want to answer more?
+                    </p>
+                    <p className={`mx-auto mt-2 max-w-[220px] text-[12px] leading-relaxed ${isLight ? "text-stone-600" : "text-white/55"}`}>
+                      Sign up to answer more questions and keep revealing how your views compare.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={onSignupClick}
+                      className="mt-4 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-gold/85 transition hover:bg-raw-gold/15"
+                    >
+                      Sign up to answer more
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
 
@@ -178,7 +218,7 @@ export function LandingPollsSection() {
             onClick={() => canNext && setIndex((i) => i + 1)}
             disabled={!canNext}
             aria-label="Next question"
-            className="absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-[0_0_18px_rgb(var(--raw-accent)/0.25)] transition hover:bg-raw-gold/10 disabled:cursor-not-allowed disabled:opacity-25 sm:translate-x-7"
+            className="absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-none transition hover:bg-black/75 hover:shadow-none focus:shadow-none focus-visible:shadow-none disabled:cursor-not-allowed disabled:opacity-25 sm:translate-x-7"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
           </button>
@@ -220,6 +260,8 @@ export function LandingPollsSection() {
                         : "linear-gradient(165deg, #111111 0%, #070707 100%)",
                     }}
                   >
+                    {!isLastPoll && (
+                      <>
                     <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.32em] text-raw-gold/70">
                       Anonymous Comments
                     </p>
@@ -266,6 +308,8 @@ export function LandingPollsSection() {
                         <Send className="h-3.5 w-3.5" />
                       </button>
                     </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </motion.div>
