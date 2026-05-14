@@ -19,11 +19,22 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
   const { mode, setMode } = useTheme();
   const isLightMode = mode === "light";
   const [navVisible, setNavVisible] = useState(true);
-  const modeOptions: { mode: ThemeMode; label: string; icon: typeof Moon }[] = [
+  const modeOptions: { mode: ThemeMode; label: string; icon: typeof Moon; position: string }[] = [
     { mode: "dark", label: "Dark", icon: Moon },
     { mode: "dusk", label: "Dusk", icon: Palette },
     { mode: "light", label: "Light", icon: Sun },
-  ];
+  ].map((option, index) => ({
+    ...option,
+    position: ["translate-x-1", "translate-x-[1.875rem]", "translate-x-[3.5rem]"][index],
+  }));
+  const currentModeIndex = Math.max(0, modeOptions.findIndex((option) => option.mode === mode));
+  const currentMode = modeOptions[currentModeIndex];
+  const CurrentModeIcon = currentMode.icon;
+
+  const cycleThemeMode = () => {
+    const nextMode = modeOptions[(currentModeIndex + 1) % modeOptions.length]?.mode ?? "dark";
+    setMode(nextMode);
+  };
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -113,37 +124,38 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
             </div>
           ) : (
             <>
-              <div
-                className={`grid h-8 shrink-0 grid-cols-3 gap-1 rounded-full border p-1 ${
+              <button
+                type="button"
+                onClick={cycleThemeMode}
+                className={`relative h-8 w-[5.5rem] shrink-0 rounded-full border transition-colors ${
                   isLightMode
                     ? "border-slate-300 bg-white/90"
                     : "border-raw-border/40 bg-raw-surface/60"
                 }`}
-                aria-label="Theme mode"
+                aria-label={`Theme mode: ${currentMode.label}`}
               >
-                {modeOptions.map((option) => {
-                  const Icon = option.icon;
-                  const selected = mode === option.mode;
-                  return (
-                    <button
+                <span className="absolute left-0 top-1/2 flex w-full -translate-y-1/2 justify-between px-2">
+                  {modeOptions.map((option) => (
+                    <span
                       key={option.mode}
-                      type="button"
-                      onClick={() => setMode(option.mode)}
-                      className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors ${
-                        selected
-                          ? "bg-raw-gold/20 text-raw-gold shadow-[0_0_0_1px_rgb(var(--raw-accent)/0.35)]"
+                      className={`h-1 w-1 rounded-full transition-colors ${
+                        option.mode === mode
+                          ? "bg-transparent"
                           : isLightMode
-                            ? "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                            : "text-raw-silver/55 hover:bg-raw-black/35 hover:text-raw-text"
+                            ? "bg-slate-400/45"
+                            : "bg-raw-silver/35"
                       }`}
-                      aria-label={`Use ${option.label} mode`}
-                      aria-pressed={selected}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                    </button>
-                  );
-                })}
-              </div>
+                    />
+                  ))}
+                </span>
+                <span
+                  className={`absolute left-0 top-1 flex h-6 w-6 items-center justify-center rounded-full text-raw-gold shadow transition-transform duration-300 ${currentMode.position} ${
+                    isLightMode ? "bg-white shadow-slate-300/80" : "bg-slate-700 shadow-black/40"
+                  }`}
+                >
+                  <CurrentModeIcon className="h-3.5 w-3.5" />
+                </span>
+              </button>
               <ThemeCustomizer placement="inline" triggerStyle="compact" className="flex shrink-0" />
               <button
                 onClick={handleSignupClick}
