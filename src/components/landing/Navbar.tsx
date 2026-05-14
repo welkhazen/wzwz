@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Moon, Sun, Monitor } from "lucide-react";
+import { Menu, X, Moon, Sun, Palette } from "lucide-react";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 import { track } from "@/lib/analytics";
 import { useTheme } from "@/providers/useTheme";
-import { THEME_MODE_LABELS, THEME_MODE_ORDER } from "@/providers/theme-context";
+import type { ThemeMode } from "@/providers/theme-context";
 
 const RAW_LOGO_SRC = "/raw-logo-96.png";
 
@@ -17,10 +17,13 @@ interface NavbarProps {
 export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { mode, setMode } = useTheme();
-  const modeIndex = THEME_MODE_ORDER.indexOf(mode);
   const isLightMode = mode === "light";
-  const isMediumMode = mode === "medium";
   const [navVisible, setNavVisible] = useState(true);
+  const modeOptions: { mode: ThemeMode; label: string; icon: typeof Moon }[] = [
+    { mode: "dark", label: "Dark", icon: Moon },
+    { mode: "dusk", label: "Dusk", icon: Palette },
+    { mode: "light", label: "Light", icon: Sun },
+  ];
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -110,34 +113,37 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
             </div>
           ) : (
             <>
-              <button
-                onClick={() => setMode(mode === "dark" ? "medium" : mode === "medium" ? "light" : "dark")}
-                aria-label="Toggle dark, medium, and light mode"
-                className={`relative flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-300 ${
+              <div
+                className={`grid h-8 shrink-0 grid-cols-3 gap-1 rounded-full border p-1 ${
                   isLightMode
-                    ? "border-slate-300 bg-slate-200"
-                    : isMediumMode
-                      ? "border-stone-500/60 bg-stone-700/70"
-                      : "border-raw-border/40 bg-raw-surface/60"
+                    ? "border-slate-300 bg-white/90"
+                    : "border-raw-border/40 bg-raw-surface/60"
                 }`}
+                aria-label="Theme mode"
               >
-                <span
-                  className={`absolute flex h-5 w-5 items-center justify-center rounded-full shadow transition-transform duration-300 ${
-                    isLightMode
-                      ? "translate-x-8 bg-white"
-                      : isMediumMode
-                        ? "translate-x-4.5 bg-stone-300"
-                        : "translate-x-1 bg-slate-600"
-                  }`}
-                >
-                  {isLightMode
-                    ? <Sun className="h-3 w-3 text-amber-500" />
-                    : isMediumMode
-                      ? <Monitor className="h-3 w-3 text-stone-700" />
-                      : <Moon className="h-3 w-3 text-slate-300" />
-                  }
-                </span>
-              </button>
+                {modeOptions.map((option) => {
+                  const Icon = option.icon;
+                  const selected = mode === option.mode;
+                  return (
+                    <button
+                      key={option.mode}
+                      type="button"
+                      onClick={() => setMode(option.mode)}
+                      className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors ${
+                        selected
+                          ? "bg-raw-gold/20 text-raw-gold shadow-[0_0_0_1px_rgb(var(--raw-accent)/0.35)]"
+                          : isLightMode
+                            ? "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                            : "text-raw-silver/55 hover:bg-raw-black/35 hover:text-raw-text"
+                      }`}
+                      aria-label={`Use ${option.label} mode`}
+                      aria-pressed={selected}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                    </button>
+                  );
+                })}
+              </div>
               <ThemeCustomizer placement="inline" triggerStyle="compact" className="flex shrink-0" />
               <button
                 onClick={handleSignupClick}
