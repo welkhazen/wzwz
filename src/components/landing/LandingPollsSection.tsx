@@ -148,7 +148,7 @@ export function LandingPollsSection() {
             onClick={() => canPrev && setIndex((i) => i - 1)}
             disabled={!canPrev}
             aria-label="Previous question"
-            className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-[0_0_18px_rgb(var(--raw-accent)/0.25)] transition hover:bg-raw-gold/10 disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
+            className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-none transition hover:bg-black/75 hover:shadow-none focus:shadow-none focus-visible:shadow-none disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
           </button>
@@ -178,7 +178,7 @@ export function LandingPollsSection() {
             onClick={() => canNext && setIndex((i) => i + 1)}
             disabled={!canNext}
             aria-label="Next question"
-            className="absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-[0_0_18px_rgb(var(--raw-accent)/0.25)] transition hover:bg-raw-gold/10 disabled:cursor-not-allowed disabled:opacity-25 sm:translate-x-7"
+            className="absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-none transition hover:bg-black/75 hover:shadow-none focus:shadow-none focus-visible:shadow-none disabled:cursor-not-allowed disabled:opacity-25 sm:translate-x-7"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
           </button>
