@@ -2,7 +2,9 @@ import { FloatingDock } from "@/components/ui/floating-dock";
 import { useEffect, useMemo, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
-import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles } from "lucide-react";
+import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
+import { useTheme } from "@/providers/useTheme";
+import type { ThemeMode } from "@/providers/theme-context";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -60,6 +62,10 @@ export default function Dashboard({
 }: DashboardProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { mode, setMode } = useTheme();
+  const themeCycle: ThemeMode[] = ["dark", "dusk", "light"];
+  const nextMode = themeCycle[(themeCycle.indexOf(mode) + 1) % themeCycle.length];
+  const ModeIcon = mode === "dark" ? Moon : mode === "dusk" ? CloudMoon : Sun;
   const { progress, leveledUpTo, clearLevelUp, award } = useUserProgress(user.id);
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
   const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>([]);

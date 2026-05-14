@@ -12,6 +12,7 @@ import { track } from "@/lib/analytics";
 import {
   type AvatarCatalogItem,
   loadAvatarCatalogSupabaseOnly,
+  loadFullAvatarCatalog,
   saveAvatarCatalogSupabaseOnly,
 } from "@/lib/avatarCatalog";
 import {
@@ -189,11 +190,12 @@ export default function Admin() {
   useEffect(() => {
     void (async () => {
       try {
-        const catalog = await loadAvatarCatalogSupabaseOnly();
+        const catalog = await loadFullAvatarCatalog();
         setAvatarCatalogDraft(catalog);
         setPublishInsertAt(catalog.length + 1);
-      } catch {
-        toast({ title: "Could not load avatar catalog", description: "Check Supabase table access for avatar_catalog." });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Check Supabase table access for avatar_catalog.";
+        toast({ title: "Could not load avatar catalog", description: msg });
       }
     })();
   }, []);

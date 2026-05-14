@@ -1,11 +1,7 @@
 "use client";
-/**
- * Note: Use position fixed according to your needs
- * Desktop navbar is better positioned at the bottom
- * Mobile navbar is better positioned at bottom right.
- **/
 import { cn } from "@/lib/utils";
 import { IconLayoutNavbarCollapse } from "@tabler/icons-react";
+import { useTheme } from "@/providers/useTheme";
 import {
   AnimatePresence,
   MotionValue,
@@ -52,14 +48,17 @@ const FloatingDockMobile = ({
   }[];
   className?: string;
 }) => {
+  const { mode } = useTheme();
+  const isLight = mode === "light";
   return (
     <div
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 flex lg:hidden flex-row items-center justify-around border-t border-white/10",
+        "fixed bottom-0 left-0 right-0 z-50 flex lg:hidden flex-row items-center justify-around border-t",
+        isLight ? "border-slate-200" : "border-white/10",
         className
       )}
       style={{
-        background: "rgba(10,10,10,0.98)",
+        background: isLight ? "rgba(255,255,255,0.97)" : "rgba(10,10,10,0.98)",
         paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
         paddingTop: "0.6rem",
       }}
@@ -77,7 +76,11 @@ const FloatingDockMobile = ({
           }}
           className={cn(
             "flex flex-col items-center gap-1 px-3 transition-colors",
-            item.active ? "text-raw-gold" : "text-white/60",
+            item.active
+              ? "text-raw-gold"
+              : isLight
+                ? "text-slate-400"
+                : "text-white/60",
           )}
         >
           <div className="h-5 w-5">{item.icon}</div>

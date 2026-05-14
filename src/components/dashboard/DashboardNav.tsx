@@ -193,6 +193,28 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
               </div>
             )}
           </div>
+          {/* Cycle through dark → dusk → light on each tap */}
+          {(() => {
+            const cycle: ThemeMode[] = ["dark", "dusk", "light"];
+            const next = cycle[(cycle.indexOf(mode) + 1) % cycle.length];
+            const CurIcon = mode === "dark" ? Moon : mode === "dusk" ? CloudMoon : Sun;
+            return (
+              <button
+                type="button"
+                onClick={() => setMode(next)}
+                aria-label={`Switch to ${next} mode`}
+                className={cn(
+                  "relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors",
+                  isEffectiveLight
+                    ? "border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "border-raw-border/40 bg-raw-surface/30 text-raw-silver/70 hover:text-raw-silver",
+                )}
+              >
+                <CurIcon className="h-4 w-4" />
+              </button>
+            );
+          })()}
+
           <DropdownMenu onOpenChange={(open) => { if (!open) setAppearanceOpen(false); }}>
             <DropdownMenuTrigger asChild>
               <button
