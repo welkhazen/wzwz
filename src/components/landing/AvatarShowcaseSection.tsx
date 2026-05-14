@@ -37,6 +37,7 @@ export function AvatarShowcaseSection() {
   const [isLoadingExpandedAvatars, setIsLoadingExpandedAvatars] = useState(false);
   const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
 
   const applyFullThemes = (items: AvatarCatalogItem[]) => {
     setFullCatalog(items);
@@ -301,7 +302,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
       }
     >
       {/* ── Mobile (<sm): phone left + 2-col avatar grid right, 50/50 ── */}
-      <div className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
+      <div ref={phoneRef} className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
 
         {/* Phone: scaled to fit the left half while keeping the full home screen intact. */}
         <div
@@ -486,7 +487,12 @@ Just like in real life, every person is born with a name, an appearance, and an 
                         <button
                           key={avatar.id ?? themeIndex}
                           type="button"
-                          onClick={() => { setAvatarIndex(themeIndex); setPreviewIndex(themeIndex); }}
+                          onClick={() => {
+                            setExtraPreviewAvatar(null);
+                            setAvatarIndex(themeIndex);
+                            setPreviewIndex(themeIndex);
+                            phoneRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }}
                           onMouseEnter={() => setPreviewIndex(themeIndex)}
                           onMouseLeave={() => setPreviewIndex(avatarIndex)}
                           className="group flex flex-col items-center gap-1.5 outline-none [content-visibility:auto] [contain-intrinsic-size:72px]"
