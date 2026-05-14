@@ -147,42 +147,6 @@ export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps)
           </div>
         </div>
 
-        {isLastPoll && selected && (
-          <div
-            className="mx-auto mb-4 w-full max-w-[330px] p-[1px]"
-            style={{
-              clipPath: COMMENT_CLIP,
-              background:
-                "linear-gradient(160deg, rgb(var(--raw-accent) / 0.35) 0%, rgb(var(--raw-accent) / 0.08) 50%, rgb(var(--raw-accent) / 0.25) 100%)",
-              boxShadow: "0 8px 32px rgb(var(--raw-accent) / 0.1)",
-            }}
-          >
-            <div
-              className="px-4 py-4 text-center"
-              style={{
-                clipPath: COMMENT_CLIP,
-                background: isLight
-                  ? "linear-gradient(165deg, #fdfaf0 0%, #f5f0e0 100%)"
-                  : "linear-gradient(165deg, #111111 0%, #070707 100%)",
-              }}
-            >
-              <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-raw-gold/70">
-                Want to answer more?
-              </p>
-              <p className={`mx-auto mt-2 max-w-[220px] text-[12px] leading-relaxed ${isLight ? "text-stone-600" : "text-white/55"}`}>
-                Sign up to answer more questions and keep revealing how your views compare.
-              </p>
-              <button
-                type="button"
-                onClick={onSignupClick}
-                className="mt-4 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-gold/85 transition hover:bg-raw-gold/15"
-              >
-                Sign up to answer more
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="relative flex items-center justify-center">
           <button
             type="button"
@@ -211,6 +175,41 @@ export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps)
                 showHint
                 onVote={(optionId) => handleAnswer(optionId === "yes" ? "yes" : "no")}
               />
+              {isLastPoll && selected && (
+                <div
+                  className="absolute left-1/2 top-20 z-20 w-[min(19rem,calc(100%-2rem))] -translate-x-1/2 p-[1px]"
+                  style={{
+                    clipPath: COMMENT_CLIP,
+                    background:
+                      "linear-gradient(160deg, rgb(var(--raw-accent) / 0.35) 0%, rgb(var(--raw-accent) / 0.08) 50%, rgb(var(--raw-accent) / 0.25) 100%)",
+                    boxShadow: "0 8px 32px rgb(var(--raw-accent) / 0.1)",
+                  }}
+                >
+                  <div
+                    className="px-4 py-4 text-center"
+                    style={{
+                      clipPath: COMMENT_CLIP,
+                      background: isLight
+                        ? "linear-gradient(165deg, #fdfaf0 0%, #f5f0e0 100%)"
+                        : "linear-gradient(165deg, #111111 0%, #070707 100%)",
+                    }}
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-raw-gold/70">
+                      Want to answer more?
+                    </p>
+                    <p className={`mx-auto mt-2 max-w-[220px] text-[12px] leading-relaxed ${isLight ? "text-stone-600" : "text-white/55"}`}>
+                      Sign up to answer more questions and keep revealing how your views compare.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={onSignupClick}
+                      className="mt-4 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-gold/85 transition hover:bg-raw-gold/15"
+                    >
+                      Sign up to answer more
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
 
