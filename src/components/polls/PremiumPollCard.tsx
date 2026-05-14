@@ -139,6 +139,7 @@ export function PremiumPollCard({
                   disabled={disabled}
                   onClick={() => submitVote(primaryOption.id)}
                   showFill={false}
+                  isLightMode={isLight}
                 />
 
                 {/* Secondary / No button */}
@@ -152,6 +153,7 @@ export function PremiumPollCard({
                   disabled={disabled}
                   onClick={() => submitVote(secondaryOption.id)}
                   showFill={false}
+                  isLightMode={isLight}
                 />
 </div>
             </div>
