@@ -90,6 +90,7 @@ export function LandingPollsSection() {
   const canNext = index < total - 1;
   const currentPoll = polls[index];
   const selected = answers[index];
+  const isLastPoll = index === total - 1;
   const showComments = !!selected;
   const allComments = [...(SEED_COMMENTS[index] ?? []), ...(extraComments[index] ?? [])];
 
@@ -220,6 +221,23 @@ export function LandingPollsSection() {
                         : "linear-gradient(165deg, #111111 0%, #070707 100%)",
                     }}
                   >
+                    {isLastPoll ? (
+                      <div className="py-2 text-center">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-raw-gold/70">
+                          Want to answer more?
+                        </p>
+                        <p className={`mx-auto mt-2 max-w-[220px] text-[12px] leading-relaxed ${isLight ? "text-stone-600" : "text-white/55"}`}>
+                          Sign up to answer more questions and keep revealing how your views compare.
+                        </p>
+                        <button
+                          type="button"
+                          className="mt-4 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-gold/85 transition hover:bg-raw-gold/15"
+                        >
+                          Sign up to answer more
+                        </button>
+                      </div>
+                    ) : (
+                      <>
                     <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.32em] text-raw-gold/70">
                       Anonymous Comments
                     </p>
@@ -266,6 +284,8 @@ export function LandingPollsSection() {
                         <Send className="h-3.5 w-3.5" />
                       </button>
                     </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </motion.div>
