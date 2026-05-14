@@ -47,7 +47,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
   const { mode } = useTheme();
   const isLight = mode === "light";
   const [waitlistConfirmed, setWaitlistConfirmed] = useState(false);
-  const [showAllCards, setShowAllCards] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
   const [clickedCardRect, setClickedCardRect] = useState<DOMRect | null>(null);
@@ -144,11 +144,11 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
           </div>
 
           <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-4">
-          {communities.map((c, idx) => (
+          {communities.map((c) => (
             <div
               key={c.title}
               onClick={(e) => { if (c.waitlist) setWaitlistConfirmed(true); else openCommunityPreview(e, c); }}
-              className={`cursor-pointer${idx >= 2 && !showAllCards ? " hidden md:block" : ""}`}
+              className="cursor-pointer"
             >
               <div
                 className={
@@ -218,7 +218,16 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                       Your browser does not support this video format.
                     </video>
                     <h3 className="font-display text-sm tracking-wide text-raw-text">{c.title}</h3>
-                    <p className="mt-2 text-xs leading-relaxed text-raw-silver/50">{c.description}</p>
+                    <p className={`mt-2 text-xs leading-relaxed text-raw-silver/50 md:line-clamp-none${expandedCards.has(c.title) ? "" : " line-clamp-2"}`}>{c.description}</p>
+                    {!expandedCards.has(c.title) && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setExpandedCards((s) => new Set(s).add(c.title)); }}
+                        className="mt-1 text-[10px] text-raw-gold/60 hover:text-raw-gold md:hidden"
+                      >
+                        more
+                      </button>
+                    )}
                   </>
                 ) : (
                   <>
@@ -226,7 +235,16 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                       <span className="text-[10px] font-medium tracking-wider text-raw-gold/70 uppercase">{c.badge}</span>
                     </div>
                     <h3 className="font-display text-sm tracking-wide text-raw-text">{c.title}</h3>
-                    <p className="mt-2 text-xs leading-relaxed text-raw-silver/50">{c.description}</p>
+                    <p className={`mt-2 text-xs leading-relaxed text-raw-silver/50 md:line-clamp-none${expandedCards.has(c.title) ? "" : " line-clamp-2"}`}>{c.description}</p>
+                    {!expandedCards.has(c.title) && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setExpandedCards((s) => new Set(s).add(c.title)); }}
+                        className="mt-1 text-[10px] text-raw-gold/60 hover:text-raw-gold md:hidden"
+                      >
+                        more
+                      </button>
+                    )}
                   </>
                 )}
               </div>
@@ -234,15 +252,6 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
           ))}
           </div>
 
-          {!showAllCards && (
-            <button
-              type="button"
-              onClick={() => setShowAllCards(true)}
-              className="mt-5 w-full md:hidden rounded-full border border-raw-border/40 bg-raw-surface/40 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-raw-silver/60 transition hover:border-raw-gold/30 hover:text-raw-silver/90"
-            >
-              Show more communities
-            </button>
-          )}
         </div>
 
         {/* Communities worldwide */}
