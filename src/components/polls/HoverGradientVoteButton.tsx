@@ -12,6 +12,7 @@ interface HoverGradientVoteButtonProps {
   themeHue?: "primary" | "neutral";
   onClick: () => void;
   showFill?: boolean;
+  hideSelectedGlow?: boolean;
 }
 
 const RESULT_ANIMATION_DURATION_MS = 800;
@@ -26,6 +27,7 @@ export function HoverGradientVoteButton({
   themeHue = "primary",
   onClick,
   showFill = true,
+  hideSelectedGlow = false,
 }: HoverGradientVoteButtonProps) {
   const [waterFilled, setWaterFilled] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -89,7 +91,7 @@ export function HoverGradientVoteButton({
       )}
       style={{
         background: borderGradient,
-        boxShadow: selected
+        boxShadow: selected && !hideSelectedGlow
           ? "0 0 24px hsl(var(--primary) / 0.55), 0 0 48px hsl(var(--primary) / 0.28)"
           : dimmed ? "none" : "0 0 12px hsl(var(--primary) / 0.12)",
       }}

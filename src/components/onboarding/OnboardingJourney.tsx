@@ -590,6 +590,8 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                               pollIndex={currentPollIndex}
                               totalPolls={onboardingPolls.length}
                               hideInternalNav
+                              noOuterGlow
+                              hideButtonGlow
                               onSwipe={(option) => {
                                 track("onboarding_poll_answered", { poll_id: currentPoll.id, option_id: option, step_index: currentPollIndex });
                                 setPollSelections((prev) => ({ ...prev, [currentPoll.id]: option }));
