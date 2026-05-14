@@ -100,15 +100,19 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
               ) : null}
               <Sparkles className="h-4 w-4 text-raw-gold" />
               <span className="font-display text-sm tracking-wide text-raw-gold">
-                {landedEntry.name} unlocked
+                You won {landedEntry.name}
               </span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-raw-text/75">
-              This avatar has been automatically added to your inventory as an early access gift from raW.
+              You won this cool avatar from raW's early access wheel.
             </p>
-            <p className="mt-2 text-[11px] text-raw-silver/45">
-              You'll find it waiting in your profile when you join.
-            </p>
+            <button
+              type="button"
+              onClick={onSignupClick}
+              className="mt-4 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-gold/85 transition hover:bg-raw-gold/15"
+            >
+              Sign up to claim it
+            </button>
           </div>
         )}
       </div>
