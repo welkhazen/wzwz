@@ -138,31 +138,35 @@ export function readAvatarThemesFromCache(): AvatarCatalogItem[] {
 
 async function refreshAvatarCatalogFromSupabase(): Promise<void> {
   try {
-    const { data, error } = await supabase
-      .from("avatar_catalog")
-      .select("*")
-      .eq("is_active", true)
-      .order("level", { ascending: true });
-
-    if (error) { markBackendMissingIfNeeded(error); return; }
+    let data: Record<string, unknown>[] | null = null;
+    for (const cols of [FULL_COLS, BASE_COLS]) {
+      const { data: d, error } = await supabase
+        .from("avatar_catalog")
+        .select(cols)
+        .eq("is_active", true)
+        .order("level", { ascending: true });
+      if (!error) { data = d as Record<string, unknown>[]; break; }
+      markBackendMissingIfNeeded(error);
+      if (cols === BASE_COLS) return;
+    }
 
     const mapped = (data ?? []).map((row) => ({
-      id: row.id,
-      level: row.level,
-      name: row.name,
-      price: row.price,
-      imageSrc: row.image_src ?? undefined,
-      bg: row.bg,
-      figure: row.figure,
-      ring: row.ring,
-      glow: row.glow,
-      isActive: row.is_active,
+      id: row.id as string,
+      level: row.level as number,
+      name: row.name as string,
+      price: row.price as string,
+      imageSrc: (row.image_src as string | undefined) ?? undefined,
+      bg: row.bg as string,
+      figure: row.figure as string,
+      ring: row.ring as string,
+      glow: row.glow as string,
+      isActive: row.is_active as boolean,
       isNew: false,
-      rarity: row.rarity ?? "common",
-      dropWeight: row.drop_weight ?? 100,
+      rarity: (row.rarity as AvatarRarity | undefined) ?? "common",
+      dropWeight: (row.drop_weight as number | undefined) ?? 100,
     }));
 
-    if (mapped.length > 0) writeAvatarCatalogLocal(mapped); // dispatches raw:avatar-catalog-updated
+    if (mapped.length > 0) writeAvatarCatalogLocal(mapped);
   } catch { /* stay on local cache */ }
 }
 
@@ -171,32 +175,37 @@ export function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
   return Promise.resolve(readAvatarCatalogLocal());
 }
 
-export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem[]> {
-  const { data, error } = await supabase
-    .from("avatar_catalog")
-    .select("*")
-    .eq("is_active", true)
-    .order("level", { ascending: true });
+const FULL_COLS = "id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new, rarity, drop_weight";
+const BASE_COLS = "id, level, name, price, bg, figure, ring, glow, is_active";
 
-  if (error) {
-    throw new Error(error.message || "Could not load avatar catalog from Supabase.");
+export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem[]> {
+  // Try full column set first; fall back to base columns if schema is missing optional fields.
+  let data: Record<string, unknown>[] | null = null;
+  for (const cols of [FULL_COLS, BASE_COLS]) {
+    const { data: d, error } = await supabase
+      .from("avatar_catalog")
+      .select(cols)
+      .eq("is_active", true)
+      .order("level", { ascending: true });
+    if (!error) { data = d as Record<string, unknown>[]; break; }
+    if (cols === BASE_COLS) throw new Error(error.message || "Could not load avatar catalog from Supabase.");
   }
 
   const mapped = sanitizeCatalog(
     (data ?? []).map((row) => ({
-      id: row.id,
-      level: row.level,
-      name: row.name,
-      price: row.price,
-      imageSrc: row.image_src ?? undefined,
-      bg: row.bg,
-      figure: row.figure,
-      ring: row.ring,
-      glow: row.glow,
-      isActive: row.is_active,
+      id: row.id as string,
+      level: row.level as number,
+      name: row.name as string,
+      price: row.price as string,
+      imageSrc: (row.image_src as string | undefined) ?? undefined,
+      bg: row.bg as string,
+      figure: row.figure as string,
+      ring: row.ring as string,
+      glow: row.glow as string,
+      isActive: row.is_active as boolean,
       isNew: false,
-      rarity: row.rarity ?? "common",
-      dropWeight: row.drop_weight ?? 100,
+      rarity: (row.rarity as AvatarRarity | undefined) ?? "common",
+      dropWeight: (row.drop_weight as number | undefined) ?? 100,
     }))
   );
 
@@ -224,29 +233,30 @@ function writeFullAvatarCatalogLocal(items: AvatarCatalogItem[]): void {
 }
 
 export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
-  const { data, error } = await supabase
-    .from("avatar_catalog")
-    .select("*")
-    .order("level", { ascending: true });
-
-  if (error) {
-    throw new Error(error.message || "Could not load full avatar catalog from Supabase.");
+  let data: Record<string, unknown>[] | null = null;
+  for (const cols of [FULL_COLS, BASE_COLS]) {
+    const { data: d, error } = await supabase
+      .from("avatar_catalog")
+      .select(cols)
+      .order("level", { ascending: true });
+    if (!error) { data = d as Record<string, unknown>[]; break; }
+    if (cols === BASE_COLS) throw new Error(error.message || "Could not load full avatar catalog from Supabase.");
   }
 
   const mapped = (data ?? []).map((row, idx) => ({
-    id: row.id,
+    id: row.id as string,
     level: idx + 1,
-    name: row.name,
-    price: row.price,
-    imageSrc: row.image_src ?? undefined,
-    bg: row.bg || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].bg,
-    figure: row.figure || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].figure,
-    ring: row.ring || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].ring,
-    glow: row.glow || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].glow,
-    isActive: row.is_active,
+    name: row.name as string,
+    price: row.price as string,
+    imageSrc: (row.image_src as string | undefined) ?? undefined,
+    bg: (row.bg as string) || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].bg,
+    figure: (row.figure as string) || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].figure,
+    ring: (row.ring as string) || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].ring,
+    glow: (row.glow as string) || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].glow,
+    isActive: row.is_active as boolean,
     isNew: false,
-    rarity: row.rarity ?? "common",
-    dropWeight: row.drop_weight ?? 100,
+    rarity: (row.rarity as AvatarRarity | undefined) ?? "common",
+    dropWeight: (row.drop_weight as number | undefined) ?? 100,
   }));
 
   if (mapped.length > 0) writeFullAvatarCatalogLocal(mapped);
