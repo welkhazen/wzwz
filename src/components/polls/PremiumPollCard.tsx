@@ -122,7 +122,6 @@ export function PremiumPollCard({
                 src={brainPollArt}
                 alt="Cumulative Mind"
                 className="h-full w-full object-contain"
-                style={{ filter: "drop-shadow(0 0 16px rgb(var(--raw-accent) / 0.36))" }}
                 draggable={false}
               />
             </div>
