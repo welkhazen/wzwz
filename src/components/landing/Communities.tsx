@@ -46,7 +46,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
   const sectionRef = useTrackSectionView("communities");
   const { mode } = useTheme();
   const isLight = mode === "light";
-  const [waitlistConfirmed, setWaitlistConfirmed] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
   const [clickedCardRect, setClickedCardRect] = useState<DOMRect | null>(null);
@@ -80,10 +80,6 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
     setPreviewOpen(true);
     setVisibleMessages(0);
     setAnonInput("");
-
-    if (community.waitlist) {
-      setWaitlistConfirmed(true);
-    }
   }
 
   useEffect(() => {
@@ -146,7 +142,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
           {communities.map((c) => (
             <div
               key={c.title}
-              onClick={(e) => { if (c.waitlist) setWaitlistConfirmed(true); else openCommunityPreview(e, c); }}
+              onClick={(e) => { if (!c.waitlist) openCommunityPreview(e, c); }}
               className="cursor-pointer"
             >
               <div
@@ -217,7 +213,16 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                       Your browser does not support this video format.
                     </video>
                     <h3 className="font-display text-sm tracking-wide text-raw-text">{c.title}</h3>
-                    <p className="mt-2 text-xs leading-relaxed text-raw-silver/50">{c.description}</p>
+                    <p className={`mt-2 text-xs leading-relaxed text-raw-silver/50 md:line-clamp-none${expandedCards.has(c.title) ? "" : " line-clamp-2"}`}>{c.description}</p>
+                    {!expandedCards.has(c.title) && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setExpandedCards((s) => new Set(s).add(c.title)); }}
+                        className="mt-1 text-[10px] text-raw-gold/60 hover:text-raw-gold md:hidden"
+                      >
+                        more
+                      </button>
+                    )}
                   </>
                 ) : (
                   <>
@@ -225,13 +230,23 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                       <span className="text-[10px] font-medium tracking-wider text-raw-gold/70 uppercase">{c.badge}</span>
                     </div>
                     <h3 className="font-display text-sm tracking-wide text-raw-text">{c.title}</h3>
-                    <p className="mt-2 text-xs leading-relaxed text-raw-silver/50">{c.description}</p>
+                    <p className={`mt-2 text-xs leading-relaxed text-raw-silver/50 md:line-clamp-none${expandedCards.has(c.title) ? "" : " line-clamp-2"}`}>{c.description}</p>
+                    {!expandedCards.has(c.title) && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setExpandedCards((s) => new Set(s).add(c.title)); }}
+                        className="mt-1 text-[10px] text-raw-gold/60 hover:text-raw-gold md:hidden"
+                      >
+                        more
+                      </button>
+                    )}
                   </>
                 )}
               </div>
             </div>
           ))}
           </div>
+
         </div>
 
         {/* Communities worldwide */}
