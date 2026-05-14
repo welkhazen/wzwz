@@ -98,7 +98,6 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
 
     root.classList.toggle("theme-light", effectiveMode === "light");
     root.classList.toggle("theme-dusk", effectiveMode === "dusk");
-    root.classList.toggle("theme-dawn", effectiveMode === "dawn");
     root.dataset.themeMode = effectiveMode;
     root.dataset.themeAccent = effectiveAccent;
     root.style.setProperty("--raw-accent", selectedAccent.rgb);
