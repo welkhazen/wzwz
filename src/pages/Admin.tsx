@@ -1348,25 +1348,11 @@ export default function Admin() {
 
   const removeAvatarCatalogDraftItem = async (id: string) => {
     const previous = avatarCatalogDraft;
-    const next = previous
-      .filter((item) => item.id !== id)
-      .map((item, index) => ({ ...item, level: index + 1 }));
-
-    setAvatarCatalogDraft(next);
+    setAvatarCatalogDraft(previous.filter((item) => item.id !== id).map((item, index) => ({ ...item, level: index + 1 })));
     setIsSavingAvatarCatalog(true);
     try {
       await deleteAvatarFromCatalog(id);
-      const normalized = next.map((item, index) => ({
-        ...item,
-        id: item.id.trim() || `avatar-${index + 1}`,
-        name: item.name.trim() || `Avatar ${index + 1}`,
-        price: item.price.trim() || "0",
-        level: index + 1,
-        isActive: true,
-      }));
-      const saved = await saveAvatarCatalogSupabaseOnly(normalized);
-      setAvatarCatalogDraft(saved);
-      toast({ title: "Avatar removed", description: "Catalog update saved." });
+      toast({ title: "Avatar removed" });
     } catch (error) {
       setAvatarCatalogDraft(previous);
       const message = error instanceof Error ? error.message : "Please try again.";
@@ -2726,15 +2712,45 @@ export default function Admin() {
                                   type="file"
                                   accept="image/*"
                                   className="sr-only"
-                                  onChange={(event) => {
+                                  onChange={async (event) => {
                                     const file = event.target.files?.[0];
                                     if (!file) return;
-                                    const reader = new FileReader();
-                                    reader.onload = () => {
-                                      updateAvatarCatalogDraftItem(item.id, { imageSrc: String(reader.result) });
-                                    };
-                                    reader.readAsDataURL(file);
                                     event.target.value = "";
+                                    // Convert to WebP via canvas before uploading
+                                    const uploadBlob = await new Promise<Blob>((resolve) => {
+                                      const img = new Image();
+                                      const url = URL.createObjectURL(file);
+                                      img.onload = () => {
+                                        URL.revokeObjectURL(url);
+                                        const canvas = document.createElement("canvas");
+                                        canvas.width = img.naturalWidth;
+                                        canvas.height = img.naturalHeight;
+                                        canvas.getContext("2d")!.drawImage(img, 0, 0);
+                                        canvas.toBlob((blob) => resolve(blob ?? file), "image/webp", 0.92);
+                                      };
+                                      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+                                      img.src = url;
+                                    });
+                                    const filePath = `catalog/cat-img-${item.id}-${Date.now()}.webp`;
+                                    let uploaded = false;
+                                    for (const bucket of AVATAR_STORAGE_BUCKET_CANDIDATES) {
+                                      const { error } = await supabase.storage.from(bucket).upload(filePath, uploadBlob, {
+                                        cacheControl: "31536000",
+                                        contentType: "image/webp",
+                                        upsert: true,
+                                      });
+                                      if (!error) {
+                                        const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+                                        if (data.publicUrl) {
+                                          updateAvatarCatalogDraftItem(item.id, { imageSrc: data.publicUrl });
+                                          uploaded = true;
+                                          break;
+                                        }
+                                      }
+                                    }
+                                    if (!uploaded) {
+                                      toast({ title: "Image upload failed", description: "Could not upload to storage." });
+                                    }
                                   }}
                                 />
                               </label>
