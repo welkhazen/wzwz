@@ -122,6 +122,8 @@ export function PremiumPollCard({
                 src={brainPollArt}
                 alt="Cumulative Mind"
                 className="h-full w-full object-contain"
+                loading="lazy"
+                decoding="async"
                 draggable={false}
               />
             </div>
