@@ -84,11 +84,9 @@ export function AvatarShowcaseSection() {
         })));
       }
     };
-    // Single round-trip: full catalog covers both active-only and full needs.
-    // Removed redundant loadAvatarCatalog + loadAvatarCatalogSupabaseOnly calls
-    // that were firing 3 simultaneous queries and all hitting 500 on bad RLS state.
+    // Single round-trip for the visible catalog. Expanded range (levels 11-30)
+    // is fetched lazily in handleToggleExpandGrid when the user opens "explore all".
     loadAvatarCatalog().then(applyThemes).catch(() => {});
-    loadAvatarCatalogRange(EXPANDED_AVATAR_START_LEVEL, EXPANDED_AVATAR_END_LEVEL).then(applyRangedThemes).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
     const handler = () => applyThemes(readAvatarCatalogLocal());
     window.addEventListener("raw:avatar-catalog-updated", handler);
