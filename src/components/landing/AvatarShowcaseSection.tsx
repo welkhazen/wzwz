@@ -9,6 +9,7 @@ import { LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
+import { useTheme } from "@/providers/useTheme";
 
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
@@ -47,6 +48,8 @@ const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...EX
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
+  const { mode } = useTheme();
+  const isLight = mode === "light";
   const [avatarIndex, setAvatarIndex] = useState(1);
   const [previewIndex, setPreviewIndex] = useState(1);
   const [startIndex, setStartIndex] = useState(0);
@@ -491,7 +494,13 @@ Just like in real life, every person is born with a name, an appearance, and an 
                           </div>
                           <span
                             className="min-h-[1.35rem] text-center font-display text-[6px] uppercase leading-[1.15] tracking-wide transition-colors duration-200 sm:min-h-[1.5rem] sm:text-[7px]"
-                            style={{ color: avatarIndex === themeIndex ? "#F1C42D" : "rgba(255,255,255,0.3)" }}
+                            style={{
+                              color: avatarIndex === themeIndex
+                                ? "#F1C42D"
+                                : isLight
+                                  ? "rgba(30,41,59,0.62)"
+                                  : "rgba(255,255,255,0.3)",
+                            }}
                           >
                             {avatar.name}
                           </span>
