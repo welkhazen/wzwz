@@ -5,23 +5,51 @@ import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
-import { AVATARS, LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
-import { loadAvatarCatalog, loadAvatarCatalogRange, readAvatarCatalogLocal, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
-import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
+import { useTheme } from "@/providers/useTheme";
 
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
 const FEATURED_AVATAR_COUNT = 10;
-const EXPANDED_AVATAR_START_LEVEL = 11;
-const EXPANDED_AVATAR_END_LEVEL = 30;
 const EXPANDED_AVATAR_BATCH_SIZE = 8;
 const MOBILE_PHONE_SCALE = 0.5;
+const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
+  { id: "avatar-2", level: 2, name: "Chrome Ghost", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80", isActive: true, rarity: "common" },
+  { id: "avatar-7", level: 7, name: "Void Phantom", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#5b2aa8", glow: "#8b5cf680", isActive: true, rarity: "common" },
+  { id: "avatar-3", level: 3, name: "Iron Specter", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80", isActive: true, rarity: "common" },
+  { id: "avatar-8", level: 8, name: "Copper Wraith", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#b0550f", glow: "#f9731680", isActive: true, rarity: "common" },
+  { id: "avatar-5", level: 5, name: "Solar Enforcer", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#0f7a36", glow: "#16a34a80", isActive: true, rarity: "common" },
+  { id: "avatar-9", level: 9, name: "Inferno Shade", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#8a1515", glow: "#dc262680", isActive: true, rarity: "common" },
+  { id: "avatar-6", level: 6, name: "Neon Oracle", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true, rarity: "common" },
+  { id: "avatar-10", level: 10, name: "Golden Reaper", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590", isActive: true, rarity: "common" },
+];
+const EXPANDED_AVATARS: readonly AvatarCatalogItem[] = [
+  { id: "shadow-lynx", level: 11, name: "Shadow Lynx", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2794_0_2.png", bg: "#12091d", figure: "#d946ef", ring: "#9333ea", glow: "none", isActive: true, rarity: "common" },
+  { id: "ember-helm", level: 12, name: "Ember Helm", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_01.png", bg: "#17110a", figure: "#f97316", ring: "#c2410c", glow: "none", isActive: true, rarity: "common" },
+  { id: "verdant-skull", level: 13, name: "Verdant Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_02.png", bg: "#0f1a08", figure: "#84cc16", ring: "#4d7c0f", glow: "none", isActive: true, rarity: "common" },
+  { id: "ice-crown", level: 14, name: "Ice Crown", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_03.png", bg: "#06131f", figure: "#38bdf8", ring: "#0284c7", glow: "none", isActive: true, rarity: "common" },
+  { id: "horned-skull", level: 15, name: "Horned Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_04.png", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "none", isActive: true, rarity: "common" },
+  { id: "pharaoh-skull", level: 16, name: "Pharaoh Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_05.png", bg: "#161507", figure: "#fde047", ring: "#ca8a04", glow: "none", isActive: true, rarity: "common" },
+  { id: "violet-hood", level: 17, name: "Violet Hood", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_06.png", bg: "#150a22", figure: "#a855f7", ring: "#7e22ce", glow: "none", isActive: true, rarity: "common" },
+  { id: "rose-agent", level: 18, name: "Rose Agent", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_07.png", bg: "#1f0d18", figure: "#ec4899", ring: "#be185d", glow: "none", isActive: true, rarity: "common" },
+  { id: "black-visor", level: 19, name: "Black Visor", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_08.png", bg: "#17110a", figure: "#f97316", ring: "#c2410c", glow: "none", isActive: true, rarity: "common" },
+  { id: "blue-warden", level: 20, name: "Blue Warden", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_09.png", bg: "#06131f", figure: "#38bdf8", ring: "#0284c7", glow: "none", isActive: true, rarity: "common" },
+  { id: "star-suit", level: 21, name: "Star Suit", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_10.png", bg: "#12091d", figure: "#d946ef", ring: "#9333ea", glow: "none", isActive: true, rarity: "common" },
+  { id: "fire-matron", level: 22, name: "Fire Matron", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_11.png", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "none", isActive: true, rarity: "common" },
+  { id: "night-violet", level: 23, name: "Night Violet", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_12.png", bg: "#150a22", figure: "#a855f7", ring: "#7e22ce", glow: "none", isActive: true, rarity: "common" },
+  { id: "lava-skull", level: 24, name: "Lava Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_13.png", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "none", isActive: true, rarity: "common" },
+  { id: "pink-crown", level: 25, name: "Pink Crown", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_15.png", bg: "#1f0d18", figure: "#ec4899", ring: "#be185d", glow: "none", isActive: true, rarity: "common" },
+  { id: "gold-samurai", level: 26, name: "Gold Samurai", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_16.png", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "none", isActive: true, rarity: "common" },
+];
+const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...EXPANDED_AVATARS];
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
+  const { mode } = useTheme();
+  const isLight = mode === "light";
   const [avatarIndex, setAvatarIndex] = useState(1);
   const [previewIndex, setPreviewIndex] = useState(1);
   const [startIndex, setStartIndex] = useState(0);
@@ -31,29 +59,13 @@ export function AvatarShowcaseSection() {
   const [expandedVisibleCount, setExpandedVisibleCount] = useState(EXPANDED_AVATAR_BATCH_SIZE);
   const [showMore, setShowMore] = useState(false);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
-  const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
-  const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
-  const [expandedCatalog, setExpandedCatalog] = useState<AvatarCatalogItem[]>([]);
-  const [chooserCatalog, setChooserCatalog] = useState<AvatarCatalogItem[]>([]);
-  const [isLoadingExpandedAvatars, setIsLoadingExpandedAvatars] = useState(false);
-  const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
+  const [newAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
 
-  const applyFullThemes = (items: AvatarCatalogItem[]) => {
-    setFullCatalog(items);
-    setAvatarThemes(items.map((item) => ({
-      bg: item.bg, figure: item.figure, ring: item.ring,
-      glow: item.glow, name: item.name, imageSrc: item.imageSrc,
-    })));
-  };
-
-  const applyRangedThemes = (items: AvatarCatalogItem[]) => {
-    setExpandedCatalog(items);
-    if (items.length === 0) return;
-
+  useEffect(() => {
     const nextThemes = [...LEVEL_THEMES];
-    items.forEach((item) => {
+    LANDING_AVATARS.forEach((item) => {
       nextThemes[item.level - 1] = {
         bg: item.bg,
         figure: item.figure,
@@ -64,68 +76,11 @@ export function AvatarShowcaseSection() {
       };
     });
     setAvatarThemes(nextThemes);
-  };
-
-  useEffect(() => {
-    // Seed LEVEL_THEMES from localStorage cache immediately so avatars render
-    // on the first paint without waiting for a Supabase round-trip.
-    const cached = readFullAvatarCatalogLocal();
-    if (cached.length > 0) applyFullThemes(cached);
-
-    const applyThemes = (items: AvatarCatalogItem[]) => {
-      setCatalog(items);
-      // Never downgrade LEVEL_THEMES to a smaller set once the full catalog
-      // has been loaded — this prevents the race where loadAvatarCatalogSupabaseOnly
-      // (active-only, ~10 items) resolves after loadFullAvatarCatalog (70+ items)
-      // and resets all avatars back to the blue fallback.
-      if (items.length >= LEVEL_THEMES.length) {
-        setAvatarThemes(items.map((item) => ({
-          bg: item.bg, figure: item.figure, ring: item.ring,
-          glow: item.glow, name: item.name, imageSrc: item.imageSrc,
-        })));
-      }
-    };
-    // Single round-trip for the visible catalog. Expanded range (levels 11-30)
-    // is fetched lazily in handleToggleExpandGrid when the user opens "explore all".
-    loadAvatarCatalog().then(applyThemes).catch(() => {});
-    loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
-    // Fetch artwork avatars (levels 11-20) for the chooser. The active catalog
-    // only returns levels 1-10 (CSS-only), so we need this targeted range fetch
-    // to show real PNG artwork in the CHOOSE YOUR AVATAR section.
-    loadAvatarCatalogRange(11, FEATURED_AVATAR_COUNT + 10)
-      .then((items) => {
-        if (items.length === 0) return;
-        setChooserCatalog(items);
-        // Extend LEVEL_THEMES so AvatarFigure can resolve these levels.
-        const nextThemes = [...LEVEL_THEMES];
-        const maxLevel = items[items.length - 1]?.level ?? 0;
-        while (nextThemes.length < maxLevel) nextThemes.push({ ...nextThemes[nextThemes.length - 1] });
-        items.forEach((item) => {
-          if (item.level > 0) nextThemes[item.level - 1] = { bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, name: item.name, imageSrc: item.imageSrc };
-        });
-        setAvatarThemes(nextThemes);
-      })
-      .catch(() => {});
-    const handler = () => applyThemes(readAvatarCatalogLocal());
-    window.addEventListener("raw:avatar-catalog-updated", handler);
-    return () => window.removeEventListener("raw:avatar-catalog-updated", handler);
   }, []);
 
-  const avatarList = catalog.length > 0 ? catalog : AVATARS;
-  const safeAvatarList = avatarList.length > 0 ? avatarList : AVATARS.slice(0, 1);
-  const baseAvatars = fullCatalog.length > 0 ? fullCatalog : safeAvatarList;
-  // chooserCatalog (levels 11-20) has real PNG artwork. If it's loaded, prefer it;
-  // otherwise fall back to baseAvatars filtered for imageSrc, then plain baseAvatars.
-  const chooserSource = chooserCatalog.length >= FEATURED_AVATAR_COUNT ? chooserCatalog : baseAvatars;
-  const avatarsWithImages = chooserSource.filter((a) => a.imageSrc);
-  const featuredAvatars = avatarsWithImages.length >= FEATURED_AVATAR_COUNT
-    ? avatarsWithImages.slice(0, FEATURED_AVATAR_COUNT)
-    : chooserSource.slice(0, FEATURED_AVATAR_COUNT);
-  const chooserAvatars = featuredAvatars.length > 0 ? featuredAvatars : baseAvatars.slice(0, 1);
+  const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
-  const expandedAvatarSource = expandedCatalog.length > 0
-    ? expandedCatalog
-    : baseAvatars.filter((avatar) => avatar.level >= EXPANDED_AVATAR_START_LEVEL && avatar.level <= EXPANDED_AVATAR_END_LEVEL);
+  const expandedAvatarSource = EXPANDED_AVATARS;
   const expandedAvatarTotal = expandedAvatarSource.length;
   const visibleExtendedAvatars = expandedAvatarSource
     .slice(0, expandedVisibleCount)
@@ -133,7 +88,7 @@ export function AvatarShowcaseSection() {
   // previewAvatar must come from chooserAvatars so the phone preview matches
   // the selected chooser item (previewIndex is 1-based position in chooserAvatars).
   const previewAvatar = useMemo(
-    () => extraPreviewAvatar ?? chooserAvatars[previewIndex - 1] ?? chooserAvatars[0] ?? null,
+    () => extraPreviewAvatar ?? chooserAvatars[previewIndex - 1] ?? LANDING_AVATARS.find((avatar) => avatar.level === previewIndex) ?? chooserAvatars[0] ?? null,
     [chooserAvatars, extraPreviewAvatar, previewIndex]
   );
 
@@ -174,16 +129,7 @@ export function AvatarShowcaseSection() {
   }, [expandedAvatarTotal, showExpandGrid]);
 
   function handleToggleExpandGrid() {
-    const shouldOpen = !showExpandGrid;
-    setShowExpandGrid(shouldOpen);
-
-    if (!shouldOpen || expandedCatalog.length > 0 || isLoadingExpandedAvatars) return;
-
-    setIsLoadingExpandedAvatars(true);
-    loadAvatarCatalogRange(EXPANDED_AVATAR_START_LEVEL, EXPANDED_AVATAR_END_LEVEL)
-      .then(applyRangedThemes)
-      .catch(() => {})
-      .finally(() => setIsLoadingExpandedAvatars(false));
+    setShowExpandGrid((open) => !open);
   }
 
   function prev() {
@@ -218,7 +164,7 @@ export function AvatarShowcaseSection() {
     mobile,
   }: {
     index: number;
-    avatar: (typeof baseAvatars)[0];
+    avatar: AvatarCatalogItem;
     mobile?: boolean;
   }) {
     const isActive = index === previewIndex;
@@ -354,7 +300,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
           </p>
           <div
             ref={scrollRef}
-            className="grid grid-cols-4 gap-x-1 gap-y-3"
+            className="grid grid-flow-col grid-rows-2 gap-x-1 gap-y-3"
           >
             {chooserAvatars.map((avatar, i) => (
               <button
@@ -470,19 +416,23 @@ Just like in real life, every person is born with a name, an appearance, and an 
         <button
           type="button"
           onClick={handleToggleExpandGrid}
-          className="group flex flex-col items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.025] px-5 py-3 text-raw-silver/40 outline-none backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:border-white/20 hover:bg-white/[0.045] hover:text-raw-silver/70 focus-visible:border-white/25"
+          className="group relative flex min-w-[168px] animate-[cta-breath_3.4s_ease-in-out_infinite] flex-col items-center gap-1 overflow-hidden rounded-full border border-white/12 bg-black/35 px-7 py-3 text-raw-silver/55 outline-none backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.035] hover:border-white/30 hover:bg-black/45 hover:text-white/85 active:translate-y-0 active:scale-[0.99] focus-visible:border-white/35"
           aria-label={showExpandGrid ? "Collapse avatar grid" : "Expand avatar grid"}
         >
-          <span className="text-[10px] uppercase tracking-[0.22em] transition-opacity duration-300 group-hover:opacity-100">
-            {showExpandGrid ? "hide" : "explore all"}
+          <span className="pointer-events-none absolute inset-x-4 top-1 h-1/2 rounded-full bg-white/[0.055] blur-[1px]" />
+          <span className="pointer-events-none absolute inset-0 -translate-x-[140%] bg-[linear-gradient(105deg,transparent_0%,rgba(255,255,255,0.02)_35%,rgba(255,255,255,0.22)_50%,rgba(255,255,255,0.03)_65%,transparent_100%)] transition-transform duration-1000 ease-out group-hover:translate-x-[140%]" />
+          <span className="pointer-events-none absolute inset-x-3 bottom-1 h-px bg-gradient-to-r from-transparent via-white/18 to-transparent opacity-60" />
+          <span className="relative text-[10px] uppercase tracking-[0.26em] transition-all duration-300 group-hover:tracking-[0.3em] group-hover:text-white">
+            {showExpandGrid ? "hide" : "click to reveal more"}
           </span>
           <motion.div
-            animate={{ y: showExpandGrid ? 0 : 2 }}
-            whileHover={{ y: showExpandGrid ? 0 : 5 }}
-            transition={{ duration: 0.24, ease: "easeOut" }}
+            className="relative"
+            animate={{ y: showExpandGrid ? 0 : [0, 3, 0] }}
+            whileHover={{ y: showExpandGrid ? 0 : 6 }}
+            transition={{ duration: showExpandGrid ? 0.24 : 1.15, ease: "easeInOut", repeat: showExpandGrid ? 0 : Infinity }}
           >
             <motion.div animate={{ rotate: showExpandGrid ? 180 : 0 }} transition={{ duration: 0.3 }}>
-              <ChevronDown className="h-5 w-5 text-current opacity-70 transition-opacity duration-300 group-hover:opacity-100" />
+              <ChevronDown className="h-4 w-4 text-current opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
             </motion.div>
           </motion.div>
         </button>
@@ -501,12 +451,12 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
               >
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
-                <p className="mb-6 text-center font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60">
+                <p className="mb-5 text-center font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60 sm:mb-6">
                   All Avatars
                 </p>
                 {visibleExtendedAvatars.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-4 gap-4 place-items-center sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+                    <div className="flex flex-wrap items-start justify-center gap-x-3 gap-y-4 sm:gap-x-5 sm:gap-y-5">
                       {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
                         <button
                           key={avatar.id ?? themeIndex}
@@ -519,18 +469,38 @@ Just like in real life, every person is born with a name, an appearance, and an 
                           }}
                           onMouseEnter={() => setPreviewIndex(themeIndex)}
                           onMouseLeave={() => setPreviewIndex(avatarIndex)}
-                          className="group flex flex-col items-center gap-1.5 outline-none [content-visibility:auto] [contain-intrinsic-size:72px]"
+                          className="group flex w-12 flex-col items-center gap-1 outline-none sm:w-16 sm:gap-1.5 [content-visibility:auto] [contain-intrinsic-size:76px]"
                           aria-label={`Select ${avatar.name}`}
                         >
                           <div
-                            className="rounded-full transition-all duration-300 group-hover:scale-110"
+                            className={`relative h-11 w-11 overflow-hidden rounded-full transition-all duration-300 group-hover:scale-105 sm:h-14 sm:w-14 ${
+                              avatarIndex === themeIndex ? "ring-1 ring-raw-gold/80" : "ring-1 ring-white/10"
+                            }`}
                             style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
                           >
-                            <AvatarFigure avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
+                            {avatar.imageSrc ? (
+                              <img
+                                src={avatar.imageSrc}
+                                alt={avatar.name}
+                                loading="lazy"
+                                decoding="async"
+                                draggable={false}
+                                className="h-full w-full object-cover"
+                                style={{ objectPosition: "center 35%" }}
+                              />
+                            ) : (
+                              <AvatarFigure avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
+                            )}
                           </div>
                           <span
-                            className="text-center font-display text-[8px] uppercase tracking-wide transition-colors duration-200"
-                            style={{ color: avatarIndex === themeIndex ? "#F1C42D" : "rgba(255,255,255,0.3)" }}
+                            className="min-h-[1.35rem] text-center font-display text-[6px] uppercase leading-[1.15] tracking-wide transition-colors duration-200 sm:min-h-[1.5rem] sm:text-[7px]"
+                            style={{
+                              color: avatarIndex === themeIndex
+                                ? "#F1C42D"
+                                : isLight
+                                  ? "rgba(30,41,59,0.62)"
+                                  : "rgba(255,255,255,0.3)",
+                            }}
                           >
                             {avatar.name}
                           </span>
@@ -548,11 +518,8 @@ Just like in real life, every person is born with a name, an appearance, and an 
                     className="flex min-h-24 items-center justify-center rounded-xl border border-raw-border/30 bg-raw-black/30 px-4 text-center"
                     aria-live="polite"
                   >
-                    <p
-                      className="font-display text-[9px] uppercase tracking-[0.2em]"
-                      style={{ color: isLoadingExpandedAvatars ? "rgba(241,196,45,0.75)" : "rgba(255,255,255,0.42)" }}
-                    >
-                      {isLoadingExpandedAvatars ? "Loading avatars..." : "More avatars are loading. Tap again in a moment."}
+                    <p className="font-display text-[9px] uppercase tracking-[0.2em] text-white/45">
+                      More avatars are coming soon.
                     </p>
                   </div>
                 )}
