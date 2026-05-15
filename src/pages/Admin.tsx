@@ -2716,13 +2716,27 @@ export default function Admin() {
                                     const file = event.target.files?.[0];
                                     if (!file) return;
                                     event.target.value = "";
-                                    const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
-                                    const filePath = `catalog/cat-img-${item.id}-${Date.now()}.${ext}`;
+                                    // Convert to WebP via canvas before uploading
+                                    const uploadBlob = await new Promise<Blob>((resolve) => {
+                                      const img = new Image();
+                                      const url = URL.createObjectURL(file);
+                                      img.onload = () => {
+                                        URL.revokeObjectURL(url);
+                                        const canvas = document.createElement("canvas");
+                                        canvas.width = img.naturalWidth;
+                                        canvas.height = img.naturalHeight;
+                                        canvas.getContext("2d")!.drawImage(img, 0, 0);
+                                        canvas.toBlob((blob) => resolve(blob ?? file), "image/webp", 0.92);
+                                      };
+                                      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+                                      img.src = url;
+                                    });
+                                    const filePath = `catalog/cat-img-${item.id}-${Date.now()}.webp`;
                                     let uploaded = false;
                                     for (const bucket of AVATAR_STORAGE_BUCKET_CANDIDATES) {
-                                      const { error } = await supabase.storage.from(bucket).upload(filePath, file, {
+                                      const { error } = await supabase.storage.from(bucket).upload(filePath, uploadBlob, {
                                         cacheControl: "31536000",
-                                        contentType: file.type || "image/png",
+                                        contentType: "image/webp",
                                         upsert: true,
                                       });
                                       if (!error) {
