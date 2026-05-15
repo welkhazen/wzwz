@@ -6,9 +6,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
-import { DEFAULT_AVATAR_CATALOG, loadAvatarCatalogRange, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
-import { readLandingNewAvatarsLocal } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
@@ -17,29 +15,33 @@ const DESKTOP_COUNT = 8;
 const FEATURED_AVATAR_COUNT = 10;
 const EXPANDED_AVATAR_BATCH_SIZE = 8;
 const MOBILE_PHONE_SCALE = 0.5;
-const CHOOSER_LEVEL_ORDER = [2, 7, 3, 8, 5, 9, 6, 10] as const;
-const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = CHOOSER_LEVEL_ORDER
-  .map((level) => DEFAULT_AVATAR_CATALOG.find((a) => a.level === level))
-  .filter((a): a is AvatarCatalogItem => Boolean(a));
+const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
+  { id: "avatar-2", level: 2, name: "Chrome Ghost", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80", isActive: true, rarity: "common" },
+  { id: "avatar-7", level: 7, name: "Void Phantom", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#5b2aa8", glow: "#8b5cf680", isActive: true, rarity: "common" },
+  { id: "avatar-3", level: 3, name: "Iron Specter", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80", isActive: true, rarity: "common" },
+  { id: "avatar-8", level: 8, name: "Copper Wraith", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#b0550f", glow: "#f9731680", isActive: true, rarity: "common" },
+  { id: "avatar-5", level: 5, name: "Solar Enforcer", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#0f7a36", glow: "#16a34a80", isActive: true, rarity: "common" },
+  { id: "avatar-9", level: 9, name: "Inferno Shade", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#8a1515", glow: "#dc262680", isActive: true, rarity: "common" },
+  { id: "avatar-6", level: 6, name: "Neon Oracle", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true, rarity: "common" },
+  { id: "avatar-10", level: 10, name: "Golden Reaper", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590", isActive: true, rarity: "common" },
+];
 const EXPANDED_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "cyber-blue", level: 11, name: "Cyberblue", price: "0", imageSrc: "/avatars/img_4395_2_avatar_08_60x60.png", bg: "#06151e", figure: "#22d3ee", ring: "#0891b2", glow: "#22d3ee80", isActive: true },
-  { id: "shadow-crown", level: 12, name: "Shadow Crown", price: "0", imageSrc: "/avatars/img_4395_2_avatar_09_60x60.png", bg: "#160b18", figure: "#fb7185", ring: "#be185d", glow: "#fb718580", isActive: true },
-  { id: "metal-demon", level: 13, name: "Metal Demon", price: "0", imageSrc: "/avatars/015_metal_demon_skull.png", bg: "#17110a", figure: "#f97316", ring: "#c2410c", glow: "#f9731680", isActive: true },
-  { id: "fire-demon", level: 14, name: "Fire Demon", price: "0", imageSrc: "/avatars/009_fire_demon_skull.png", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "#fb923c80", isActive: true },
-  { id: "bronze-monk", level: 15, name: "Bronze Monk", price: "0", imageSrc: "/avatars/006_bronze_monk.png", bg: "#1b1208", figure: "#d97706", ring: "#b45309", glow: "#d9770680", isActive: true },
-  { id: "gold-crown-blue", level: 16, name: "Gold Crown", price: "0", imageSrc: "/avatars/010_gold_crown_skull_blue.png", bg: "#161507", figure: "#fde047", ring: "#ca8a04", glow: "#fde04780", isActive: true },
-  { id: "black-fire-skull", level: 17, name: "Black Fire", price: "0", imageSrc: "/avatars/014_black_fire_headphone_skull.png", bg: "#160b06", figure: "#fb923c", ring: "#f97316", glow: "#fb923c80", isActive: true },
-  { id: "flaming-crown", level: 18, name: "Flaming Crown", price: "0", imageSrc: "/avatars/013_gold_flaming_crown_skull.png", bg: "#1f1305", figure: "#facc15", ring: "#eab308", glow: "#facc1580", isActive: true },
-  { id: "void-hood", level: 19, name: "Void Hood", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2794_0.png", bg: "#12091d", figure: "#d946ef", ring: "#9333ea", glow: "#d946ef80", isActive: true },
-  { id: "neon-lynx", level: 20, name: "Neon Lynx", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2794_0_2.png", bg: "#11071a", figure: "#a855f7", ring: "#d946ef", glow: "#a855f780", isActive: true },
-  { id: "aqua-oracle", level: 21, name: "Aqua Oracle", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2794_0_1.png", bg: "#06131f", figure: "#22d3ee", ring: "#06b6d4", glow: "#22d3ee80", isActive: true },
-  { id: "solar-visor", level: 22, name: "Solar Visor", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2791_0.png", bg: "#151105", figure: "#fde047", ring: "#eab308", glow: "#fde04780", isActive: true },
-  { id: "inferno-face", level: 23, name: "Inferno Face", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2791_0_1.png", bg: "#1f0b05", figure: "#fb923c", ring: "#ea580c", glow: "#fb923c80", isActive: true },
-  { id: "rose-warden", level: 24, name: "Rose Warden", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2791_0_3.png", bg: "#1d0a17", figure: "#fb7185", ring: "#ec4899", glow: "#fb718580", isActive: true },
-  { id: "prism-mask", level: 25, name: "Prism Mask", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2791_0_2.png", bg: "#0c1020", figure: "#38bdf8", ring: "#a855f7", glow: "#38bdf880", isActive: true },
-  { id: "ember-sentinel", level: 26, name: "Ember Sentinel", price: "0", imageSrc: "/avatars/img_4395_1_avatar_03_60x60.png", bg: "#170c05", figure: "#f97316", ring: "#c2410c", glow: "#f9731680", isActive: true },
-  { id: "pink-signal", level: 27, name: "Pink Signal", price: "0", imageSrc: "/avatars/img_4395_1_avatar_04_60x60.png", bg: "#1f0d18", figure: "#ec4899", ring: "#be185d", glow: "#ec489980", isActive: true },
-  { id: "copper-watcher", level: 28, name: "Copper Watcher", price: "0", imageSrc: "/avatars/img_4395_2_avatar_04_60x60.png", bg: "#1f1208", figure: "#f97316", ring: "#b45309", glow: "#f9731680", isActive: true },
+  { id: "shadow-lynx", level: 11, name: "Shadow Lynx", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2794_0_2.png", bg: "#12091d", figure: "#d946ef", ring: "#9333ea", glow: "none", isActive: true, rarity: "common" },
+  { id: "ember-helm", level: 12, name: "Ember Helm", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_01.png", bg: "#17110a", figure: "#f97316", ring: "#c2410c", glow: "none", isActive: true, rarity: "common" },
+  { id: "verdant-skull", level: 13, name: "Verdant Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_02.png", bg: "#0f1a08", figure: "#84cc16", ring: "#4d7c0f", glow: "none", isActive: true, rarity: "common" },
+  { id: "ice-crown", level: 14, name: "Ice Crown", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_03.png", bg: "#06131f", figure: "#38bdf8", ring: "#0284c7", glow: "none", isActive: true, rarity: "common" },
+  { id: "horned-skull", level: 15, name: "Horned Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_04.png", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "none", isActive: true, rarity: "common" },
+  { id: "pharaoh-skull", level: 16, name: "Pharaoh Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_05.png", bg: "#161507", figure: "#fde047", ring: "#ca8a04", glow: "none", isActive: true, rarity: "common" },
+  { id: "violet-hood", level: 17, name: "Violet Hood", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_06.png", bg: "#150a22", figure: "#a855f7", ring: "#7e22ce", glow: "none", isActive: true, rarity: "common" },
+  { id: "rose-agent", level: 18, name: "Rose Agent", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_07.png", bg: "#1f0d18", figure: "#ec4899", ring: "#be185d", glow: "none", isActive: true, rarity: "common" },
+  { id: "black-visor", level: 19, name: "Black Visor", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_08.png", bg: "#17110a", figure: "#f97316", ring: "#c2410c", glow: "none", isActive: true, rarity: "common" },
+  { id: "blue-warden", level: 20, name: "Blue Warden", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_09.png", bg: "#06131f", figure: "#38bdf8", ring: "#0284c7", glow: "none", isActive: true, rarity: "common" },
+  { id: "star-suit", level: 21, name: "Star Suit", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_10.png", bg: "#12091d", figure: "#d946ef", ring: "#9333ea", glow: "none", isActive: true, rarity: "common" },
+  { id: "fire-matron", level: 22, name: "Fire Matron", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_11.png", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "none", isActive: true, rarity: "common" },
+  { id: "night-violet", level: 23, name: "Night Violet", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_12.png", bg: "#150a22", figure: "#a855f7", ring: "#7e22ce", glow: "none", isActive: true, rarity: "common" },
+  { id: "lava-skull", level: 24, name: "Lava Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_13.png", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "none", isActive: true, rarity: "common" },
+  { id: "pink-crown", level: 25, name: "Pink Crown", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_15.png", bg: "#1f0d18", figure: "#ec4899", ring: "#be185d", glow: "none", isActive: true, rarity: "common" },
+  { id: "gold-samurai", level: 26, name: "Gold Samurai", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_16.png", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "none", isActive: true, rarity: "common" },
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...EXPANDED_AVATARS];
 
@@ -51,58 +53,31 @@ export function AvatarShowcaseSection() {
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [showExpandGrid, setShowExpandGrid] = useState(false);
-  const [expandedLoaded, setExpandedLoaded] = useState(false);
   const [expandedVisibleCount, setExpandedVisibleCount] = useState(EXPANDED_AVATAR_BATCH_SIZE);
   const [showMore, setShowMore] = useState(false);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
-  const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
-  const [newAvatars] = useState<LandingNewAvatar[]>(() => readLandingNewAvatarsLocal());
+  const [newAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const cached = readFullAvatarCatalogLocal();
-    const landingThemeUpdates = new Map(LANDING_AVATARS.map((item) => [item.level, item]));
-    if (cached.length > 0) {
-      setFullCatalog(cached);
-      const nextThemes = [...cached.map((item) => {
-        const source = landingThemeUpdates.get(item.level) ?? item;
-        return {
-          bg: source.bg, figure: source.figure, ring: source.ring,
-          glow: source.glow, name: source.name, imageSrc: source.imageSrc,
-        };
-      })];
-      LANDING_AVATARS.forEach((item) => {
-        nextThemes[item.level - 1] = {
-          bg: item.bg,
-          figure: item.figure,
-          ring: item.ring,
-          glow: item.glow,
-          name: item.name,
-          imageSrc: item.imageSrc,
-        };
-      });
-      setAvatarThemes(nextThemes);
-    } else {
-      const nextThemes = [...LEVEL_THEMES];
-      LANDING_AVATARS.forEach((item) => {
-        nextThemes[item.level - 1] = {
-          bg: item.bg,
-          figure: item.figure,
-          ring: item.ring,
-          glow: item.glow,
-          name: item.name,
-          imageSrc: item.imageSrc,
-        };
-      });
-      setAvatarThemes(nextThemes);
-    }
+    const nextThemes = [...LEVEL_THEMES];
+    LANDING_AVATARS.forEach((item) => {
+      nextThemes[item.level - 1] = {
+        bg: item.bg,
+        figure: item.figure,
+        ring: item.ring,
+        glow: item.glow,
+        name: item.name,
+        imageSrc: item.imageSrc,
+      };
+    });
+    setAvatarThemes(nextThemes);
   }, []);
 
-  const baseAvatars = fullCatalog.length > 0 ? fullCatalog : DEFAULT_AVATAR_CATALOG;
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
-  const [expandedAvatarSource, setExpandedAvatarSource] = useState<AvatarCatalogItem[]>([...EXPANDED_AVATARS]);
+  const expandedAvatarSource = EXPANDED_AVATARS;
   const expandedAvatarTotal = expandedAvatarSource.length;
   const visibleExtendedAvatars = expandedAvatarSource
     .slice(0, expandedVisibleCount)
@@ -151,16 +126,7 @@ export function AvatarShowcaseSection() {
   }, [expandedAvatarTotal, showExpandGrid]);
 
   function handleToggleExpandGrid() {
-    setShowExpandGrid((open) => {
-      const opening = !open;
-      if (opening && !expandedLoaded) {
-        void loadAvatarCatalogRange(11, 30).then((rows) => {
-          if (rows.length > 0) setExpandedAvatarSource(rows);
-          setExpandedLoaded(true);
-        }).catch(() => setExpandedLoaded(true));
-      }
-      return opening;
-    });
+    setShowExpandGrid((open) => !open);
   }
 
   function prev() {
@@ -195,7 +161,7 @@ export function AvatarShowcaseSection() {
     mobile,
   }: {
     index: number;
-    avatar: (typeof baseAvatars)[0];
+    avatar: AvatarCatalogItem;
     mobile?: boolean;
   }) {
     const isActive = index === previewIndex;
