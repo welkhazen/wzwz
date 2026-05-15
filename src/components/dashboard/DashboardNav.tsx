@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   Bell,
   Check,
-  CloudMoon,
   LogOut,
   Moon,
   Palette,
@@ -16,6 +15,7 @@ import {
   Settings,
   Shield,
   Sun,
+  Sunset,
 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { TokenBalanceButton } from "@/components/ui/TokenBalanceButton";
@@ -85,9 +85,11 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
   const isEffectiveLight = effectiveMode === "light";
   const modeOptions: { mode: ThemeMode; label: string; icon: typeof Moon }[] = [
     { mode: "dark", label: "Dark", icon: Moon },
-    { mode: "dusk", label: "Dusk", icon: CloudMoon },
+    { mode: "dusk", label: "Dusk", icon: Sunset },
     { mode: "light", label: "Light", icon: Sun },
   ];
+  const modeIndex = modeOptions.findIndex((option) => option.mode === mode);
+  const effectiveModeIndex = modeOptions.findIndex((option) => option.mode === effectiveMode);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -193,27 +195,56 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
               </div>
             )}
           </div>
-          {/* Cycle through dark → dusk → light on each tap */}
-          {(() => {
-            const cycle: ThemeMode[] = ["dark", "dusk", "light"];
-            const next = cycle[(cycle.indexOf(mode) + 1) % cycle.length];
-            const CurIcon = mode === "dark" ? Moon : mode === "dusk" ? CloudMoon : Sun;
-            return (
-              <button
-                type="button"
-                onClick={() => setMode(next)}
-                aria-label={`Switch to ${next} mode`}
-                className={cn(
-                  "relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors",
-                  isEffectiveLight
-                    ? "border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    : "border-raw-border/40 bg-raw-surface/30 text-raw-silver/70 hover:text-raw-silver",
-                )}
-              >
-                <CurIcon className="h-4 w-4" />
-              </button>
-            );
-          })()}
+          {/* Three-state theme switcher */}
+          <div
+            className={cn(
+              "relative grid h-9 w-[104px] grid-cols-3 rounded-full border p-1 backdrop-blur-md transition-colors",
+              isEffectiveLight
+                ? "border-slate-200 bg-white/80 text-slate-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
+                : "border-white/10 bg-white/[0.045] text-white/42 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
+            )}
+            aria-label="Theme mode"
+          >
+            <span
+              className={cn(
+                "pointer-events-none absolute left-1 top-1 h-7 w-[30px] rounded-full border transition-transform duration-300 ease-out",
+                mode === "light"
+                  ? "border-slate-200 bg-white shadow-[0_3px_10px_rgba(15,23,42,0.12)]"
+                  : mode === "dusk"
+                    ? "border-fuchsia-300/25 bg-[linear-gradient(135deg,rgba(244,114,182,0.18),rgba(251,146,60,0.12))]"
+                    : "border-white/10 bg-white/8",
+              )}
+              style={{ transform: `translateX(${Math.max(modeIndex, 0) * 32}px)` }}
+            />
+            {modeOptions.map((option) => {
+              const Icon = option.icon;
+              const selected = mode === option.mode;
+              return (
+                <button
+                  key={option.mode}
+                  type="button"
+                  onClick={() => setMode(option.mode)}
+                  className={cn(
+                    "relative z-10 flex h-7 items-center justify-center rounded-full transition-all duration-200 active:scale-95",
+                    selected
+                      ? option.mode === "light"
+                        ? "text-slate-900"
+                        : option.mode === "dusk"
+                          ? "text-pink-200"
+                          : "text-white"
+                      : isEffectiveLight
+                        ? "text-slate-400 hover:text-slate-700"
+                        : "text-white/35 hover:text-white/70",
+                  )}
+                  aria-label={`Use ${option.label} mode`}
+                  aria-pressed={selected}
+                  title={option.label}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                </button>
+              );
+            })}
+          </div>
 
           <DropdownMenu onOpenChange={(open) => { if (!open) setAppearanceOpen(false); }}>
             <DropdownMenuTrigger asChild>
@@ -327,7 +358,18 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                       <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>Mode</span>
                       <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-600" : "text-raw-silver/65")}>{THEME_MODE_LABELS[effectiveMode]}</span>
                     </div>
-                    <div className={cn("mt-2 grid grid-cols-3 gap-1 rounded-full border p-1", isEffectiveLight ? "border-slate-200 bg-white" : "border-raw-border/25 bg-raw-black/35")}>
+                    <div className={cn("relative mt-2 grid grid-cols-3 rounded-full border p-1", isEffectiveLight ? "border-slate-200 bg-white" : "border-raw-border/25 bg-raw-black/35")}>
+                      <span
+                        className={cn(
+                          "pointer-events-none absolute left-1 top-1 h-9 w-[calc((100%_-_0.5rem)/3)] rounded-full border transition-transform duration-300 ease-out",
+                          effectiveMode === "light"
+                            ? "border-slate-200 bg-white shadow-[0_3px_10px_rgba(15,23,42,0.12)]"
+                            : effectiveMode === "dusk"
+                              ? "border-fuchsia-300/25 bg-[linear-gradient(135deg,rgba(244,114,182,0.18),rgba(251,146,60,0.12))]"
+                              : "border-white/10 bg-white/8",
+                        )}
+                        style={{ transform: `translateX(${Math.max(effectiveModeIndex, 0) * 100}%)` }}
+                      />
                       {modeOptions.map((option) => {
                         const Icon = option.icon;
                         const selected = effectiveMode === option.mode;
@@ -337,18 +379,22 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                             type="button"
                             onClick={() => { setMode(option.mode); setHoveredMode(null); }}
                             className={cn(
-                              "flex h-9 items-center justify-center gap-1.5 rounded-full px-2 text-[11px] font-semibold transition-colors",
+                              "relative z-10 flex h-9 items-center justify-center rounded-full px-2 transition-all duration-200 active:scale-95",
                               selected
-                                ? "bg-raw-gold/18 text-raw-gold shadow-[0_0_0_1px_rgb(var(--raw-accent)/0.35)]"
+                                ? option.mode === "light"
+                                  ? "text-slate-900"
+                                  : option.mode === "dusk"
+                                    ? "text-pink-200"
+                                    : "text-white"
                                 : isEffectiveLight
-                                  ? "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                                  : "text-raw-silver/55 hover:bg-raw-surface/60 hover:text-raw-text",
+                                  ? "text-slate-400 hover:text-slate-700"
+                                  : "text-raw-silver/45 hover:text-raw-text",
                             )}
                             aria-pressed={selected}
                             aria-label={`Use ${option.label} mode`}
+                            title={option.label}
                           >
                             <Icon className="h-3.5 w-3.5" />
-                            <span>{option.label}</span>
                           </button>
                         );
                       })}

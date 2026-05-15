@@ -8,7 +8,7 @@ import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
 import { DEFAULT_AVATAR_CATALOG, loadAvatarCatalogRange, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
-import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
+import { readLandingNewAvatarsLocal } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
@@ -19,6 +19,16 @@ const EXPANDED_AVATAR_START_LEVEL = 11;
 const EXPANDED_AVATAR_END_LEVEL = 30;
 const EXPANDED_AVATAR_BATCH_SIZE = 8;
 const MOBILE_PHONE_SCALE = 0.5;
+const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
+  { id: "avatar-2", level: 2, name: "Chrome Ghost", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80", isActive: true },
+  { id: "avatar-7", level: 7, name: "Void Phantom", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#5b2aa8", glow: "#8b5cf680", isActive: true },
+  { id: "avatar-3", level: 3, name: "Iron Specter", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80", isActive: true },
+  { id: "avatar-8", level: 8, name: "Copper Wraith", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#b0550f", glow: "#f9731680", isActive: true },
+  { id: "avatar-5", level: 5, name: "Solar Enforcer", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#0f7a36", glow: "#16a34a80", isActive: true },
+  { id: "avatar-9", level: 9, name: "Inferno Shade", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#8a1515", glow: "#dc262680", isActive: true },
+  { id: "avatar-6", level: 6, name: "Neon Oracle", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true },
+  { id: "avatar-10", level: 10, name: "Golden Reaper", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590", isActive: true },
+];
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
@@ -34,7 +44,7 @@ export function AvatarShowcaseSection() {
   const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
   const [expandedCatalog, setExpandedCatalog] = useState<AvatarCatalogItem[]>([]);
   const [isLoadingExpandedAvatars, setIsLoadingExpandedAvatars] = useState(false);
-  const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
+  const [newAvatars] = useState<LandingNewAvatar[]>(() => readLandingNewAvatarsLocal());
   const scrollRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
 
@@ -58,18 +68,35 @@ export function AvatarShowcaseSection() {
 
   useEffect(() => {
     const cached = readFullAvatarCatalogLocal();
+    const chooserThemeUpdates = new Map(CHOOSER_AVATARS.map((item) => [item.level, item]));
     if (cached.length > 0) {
       setFullCatalog(cached);
-      setAvatarThemes(cached.map((item) => ({
-        bg: item.bg, figure: item.figure, ring: item.ring,
-        glow: item.glow, name: item.name, imageSrc: item.imageSrc,
-      })));
+      setAvatarThemes(cached.map((item) => {
+        const chooserAvatar = chooserThemeUpdates.get(item.level);
+        const source = chooserAvatar ?? item;
+        return {
+          bg: source.bg, figure: source.figure, ring: source.ring,
+          glow: source.glow, name: source.name, imageSrc: source.imageSrc,
+        };
+      }));
+    } else {
+      const nextThemes = [...LEVEL_THEMES];
+      CHOOSER_AVATARS.forEach((item) => {
+        nextThemes[item.level - 1] = {
+          bg: item.bg,
+          figure: item.figure,
+          ring: item.ring,
+          glow: item.glow,
+          name: item.name,
+          imageSrc: item.imageSrc,
+        };
+      });
+      setAvatarThemes(nextThemes);
     }
-    loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
   }, []);
 
   const baseAvatars = fullCatalog.length > 0 ? fullCatalog : DEFAULT_AVATAR_CATALOG;
-  const chooserAvatars = DEFAULT_AVATAR_CATALOG;
+  const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
   const expandedAvatarSource = expandedCatalog.length > 0
     ? expandedCatalog
