@@ -6,7 +6,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
-import { DEFAULT_AVATAR_CATALOG, loadAvatarCatalogRange, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { DEFAULT_AVATAR_CATALOG, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { readLandingNewAvatarsLocal } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
@@ -15,8 +15,6 @@ import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
 const FEATURED_AVATAR_COUNT = 10;
-const EXPANDED_AVATAR_START_LEVEL = 11;
-const EXPANDED_AVATAR_END_LEVEL = 30;
 const EXPANDED_AVATAR_BATCH_SIZE = 8;
 const MOBILE_PHONE_SCALE = 0.5;
 const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
@@ -29,6 +27,27 @@ const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "avatar-6", level: 6, name: "Neon Oracle", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true },
   { id: "avatar-10", level: 10, name: "Golden Reaper", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590", isActive: true },
 ];
+const EXPANDED_AVATARS: readonly AvatarCatalogItem[] = [
+  { id: "cyber-blue", level: 11, name: "Cyberblue", price: "0", imageSrc: "/avatars/img_4395_2_avatar_08_60x60.png", bg: "#06151e", figure: "#22d3ee", ring: "#0891b2", glow: "#22d3ee80", isActive: true },
+  { id: "shadow-crown", level: 12, name: "Shadow Crown", price: "0", imageSrc: "/avatars/img_4395_2_avatar_09_60x60.png", bg: "#160b18", figure: "#fb7185", ring: "#be185d", glow: "#fb718580", isActive: true },
+  { id: "metal-demon", level: 13, name: "Metal Demon", price: "0", imageSrc: "/avatars/015_metal_demon_skull.png", bg: "#17110a", figure: "#f97316", ring: "#c2410c", glow: "#f9731680", isActive: true },
+  { id: "fire-demon", level: 14, name: "Fire Demon", price: "0", imageSrc: "/avatars/009_fire_demon_skull.png", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "#fb923c80", isActive: true },
+  { id: "bronze-monk", level: 15, name: "Bronze Monk", price: "0", imageSrc: "/avatars/006_bronze_monk.png", bg: "#1b1208", figure: "#d97706", ring: "#b45309", glow: "#d9770680", isActive: true },
+  { id: "gold-crown-blue", level: 16, name: "Gold Crown", price: "0", imageSrc: "/avatars/010_gold_crown_skull_blue.png", bg: "#161507", figure: "#fde047", ring: "#ca8a04", glow: "#fde04780", isActive: true },
+  { id: "black-fire-skull", level: 17, name: "Black Fire", price: "0", imageSrc: "/avatars/014_black_fire_headphone_skull.png", bg: "#160b06", figure: "#fb923c", ring: "#f97316", glow: "#fb923c80", isActive: true },
+  { id: "flaming-crown", level: 18, name: "Flaming Crown", price: "0", imageSrc: "/avatars/013_gold_flaming_crown_skull.png", bg: "#1f1305", figure: "#facc15", ring: "#eab308", glow: "#facc1580", isActive: true },
+  { id: "void-hood", level: 19, name: "Void Hood", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2794_0.png", bg: "#12091d", figure: "#d946ef", ring: "#9333ea", glow: "#d946ef80", isActive: true },
+  { id: "neon-lynx", level: 20, name: "Neon Lynx", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2794_0_2.png", bg: "#11071a", figure: "#a855f7", ring: "#d946ef", glow: "#a855f780", isActive: true },
+  { id: "aqua-oracle", level: 21, name: "Aqua Oracle", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2794_0_1.png", bg: "#06131f", figure: "#22d3ee", ring: "#06b6d4", glow: "#22d3ee80", isActive: true },
+  { id: "solar-visor", level: 22, name: "Solar Visor", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2791_0.png", bg: "#151105", figure: "#fde047", ring: "#eab308", glow: "#fde04780", isActive: true },
+  { id: "inferno-face", level: 23, name: "Inferno Face", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2791_0_1.png", bg: "#1f0b05", figure: "#fb923c", ring: "#ea580c", glow: "#fb923c80", isActive: true },
+  { id: "rose-warden", level: 24, name: "Rose Warden", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2791_0_3.png", bg: "#1d0a17", figure: "#fb7185", ring: "#ec4899", glow: "#fb718580", isActive: true },
+  { id: "prism-mask", level: 25, name: "Prism Mask", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2791_0_2.png", bg: "#0c1020", figure: "#38bdf8", ring: "#a855f7", glow: "#38bdf880", isActive: true },
+  { id: "ember-sentinel", level: 26, name: "Ember Sentinel", price: "0", imageSrc: "/avatars/img_4395_1_avatar_03_60x60.png", bg: "#170c05", figure: "#f97316", ring: "#c2410c", glow: "#f9731680", isActive: true },
+  { id: "pink-signal", level: 27, name: "Pink Signal", price: "0", imageSrc: "/avatars/img_4395_1_avatar_04_60x60.png", bg: "#1f0d18", figure: "#ec4899", ring: "#be185d", glow: "#ec489980", isActive: true },
+  { id: "copper-watcher", level: 28, name: "Copper Watcher", price: "0", imageSrc: "/avatars/img_4395_2_avatar_04_60x60.png", bg: "#1f1208", figure: "#f97316", ring: "#b45309", glow: "#f9731680", isActive: true },
+];
+const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...EXPANDED_AVATARS];
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
@@ -42,46 +61,36 @@ export function AvatarShowcaseSection() {
   const [showMore, setShowMore] = useState(false);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
-  const [expandedCatalog, setExpandedCatalog] = useState<AvatarCatalogItem[]>([]);
-  const [isLoadingExpandedAvatars, setIsLoadingExpandedAvatars] = useState(false);
   const [newAvatars] = useState<LandingNewAvatar[]>(() => readLandingNewAvatarsLocal());
   const scrollRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
 
-  const applyRangedThemes = (items: AvatarCatalogItem[]) => {
-    setExpandedCatalog(items);
-    if (items.length === 0) return;
-
-    const nextThemes = [...LEVEL_THEMES];
-    items.forEach((item) => {
-      nextThemes[item.level - 1] = {
-        bg: item.bg,
-        figure: item.figure,
-        ring: item.ring,
-        glow: item.glow,
-        name: item.name,
-        imageSrc: item.imageSrc,
-      };
-    });
-    setAvatarThemes(nextThemes);
-  };
-
   useEffect(() => {
     const cached = readFullAvatarCatalogLocal();
-    const chooserThemeUpdates = new Map(CHOOSER_AVATARS.map((item) => [item.level, item]));
+    const landingThemeUpdates = new Map(LANDING_AVATARS.map((item) => [item.level, item]));
     if (cached.length > 0) {
       setFullCatalog(cached);
-      setAvatarThemes(cached.map((item) => {
-        const chooserAvatar = chooserThemeUpdates.get(item.level);
-        const source = chooserAvatar ?? item;
+      const nextThemes = [...cached.map((item) => {
+        const source = landingThemeUpdates.get(item.level) ?? item;
         return {
           bg: source.bg, figure: source.figure, ring: source.ring,
           glow: source.glow, name: source.name, imageSrc: source.imageSrc,
         };
-      }));
+      })];
+      LANDING_AVATARS.forEach((item) => {
+        nextThemes[item.level - 1] = {
+          bg: item.bg,
+          figure: item.figure,
+          ring: item.ring,
+          glow: item.glow,
+          name: item.name,
+          imageSrc: item.imageSrc,
+        };
+      });
+      setAvatarThemes(nextThemes);
     } else {
       const nextThemes = [...LEVEL_THEMES];
-      CHOOSER_AVATARS.forEach((item) => {
+      LANDING_AVATARS.forEach((item) => {
         nextThemes[item.level - 1] = {
           bg: item.bg,
           figure: item.figure,
@@ -98,9 +107,7 @@ export function AvatarShowcaseSection() {
   const baseAvatars = fullCatalog.length > 0 ? fullCatalog : DEFAULT_AVATAR_CATALOG;
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
-  const expandedAvatarSource = expandedCatalog.length > 0
-    ? expandedCatalog
-    : baseAvatars.filter((avatar) => avatar.level >= EXPANDED_AVATAR_START_LEVEL && avatar.level <= EXPANDED_AVATAR_END_LEVEL);
+  const expandedAvatarSource = EXPANDED_AVATARS;
   const expandedAvatarTotal = expandedAvatarSource.length;
   const visibleExtendedAvatars = expandedAvatarSource
     .slice(0, expandedVisibleCount)
@@ -108,7 +115,7 @@ export function AvatarShowcaseSection() {
   // previewAvatar must come from chooserAvatars so the phone preview matches
   // the selected chooser item (previewIndex is 1-based position in chooserAvatars).
   const previewAvatar = useMemo(
-    () => extraPreviewAvatar ?? chooserAvatars[previewIndex - 1] ?? chooserAvatars[0] ?? null,
+    () => extraPreviewAvatar ?? chooserAvatars[previewIndex - 1] ?? LANDING_AVATARS.find((avatar) => avatar.level === previewIndex) ?? chooserAvatars[0] ?? null,
     [chooserAvatars, extraPreviewAvatar, previewIndex]
   );
 
@@ -149,16 +156,7 @@ export function AvatarShowcaseSection() {
   }, [expandedAvatarTotal, showExpandGrid]);
 
   function handleToggleExpandGrid() {
-    const shouldOpen = !showExpandGrid;
-    setShowExpandGrid(shouldOpen);
-
-    if (!shouldOpen || expandedCatalog.length > 0 || isLoadingExpandedAvatars) return;
-
-    setIsLoadingExpandedAvatars(true);
-    loadAvatarCatalogRange(EXPANDED_AVATAR_START_LEVEL, EXPANDED_AVATAR_END_LEVEL)
-      .then(applyRangedThemes)
-      .catch(() => {})
-      .finally(() => setIsLoadingExpandedAvatars(false));
+    setShowExpandGrid((open) => !open);
   }
 
   function prev() {
@@ -481,7 +479,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 </p>
                 {visibleExtendedAvatars.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-4 gap-4 place-items-center sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+                    <div className="flex flex-wrap items-start justify-center gap-x-5 gap-y-5">
                       {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
                         <button
                           key={avatar.id ?? themeIndex}
@@ -494,17 +492,17 @@ Just like in real life, every person is born with a name, an appearance, and an 
                           }}
                           onMouseEnter={() => setPreviewIndex(themeIndex)}
                           onMouseLeave={() => setPreviewIndex(avatarIndex)}
-                          className="group flex flex-col items-center gap-1.5 outline-none [content-visibility:auto] [contain-intrinsic-size:72px]"
+                          className="group flex w-16 flex-col items-center gap-1.5 outline-none [content-visibility:auto] [contain-intrinsic-size:84px]"
                           aria-label={`Select ${avatar.name}`}
                         >
                           <div
-                            className="rounded-full transition-all duration-300 group-hover:scale-110"
+                            className="rounded-full transition-all duration-300 group-hover:scale-105"
                             style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
                           >
-                            <AvatarFigure avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
+                            <AvatarFigure avatarIndex={themeIndex} size="md" selected={avatarIndex === themeIndex} />
                           </div>
                           <span
-                            className="text-center font-display text-[8px] uppercase tracking-wide transition-colors duration-200"
+                            className="min-h-[1.5rem] text-center font-display text-[7px] uppercase leading-[1.15] tracking-wide transition-colors duration-200"
                             style={{ color: avatarIndex === themeIndex ? "#F1C42D" : "rgba(255,255,255,0.3)" }}
                           >
                             {avatar.name}
@@ -523,11 +521,8 @@ Just like in real life, every person is born with a name, an appearance, and an 
                     className="flex min-h-24 items-center justify-center rounded-xl border border-raw-border/30 bg-raw-black/30 px-4 text-center"
                     aria-live="polite"
                   >
-                    <p
-                      className="font-display text-[9px] uppercase tracking-[0.2em]"
-                      style={{ color: isLoadingExpandedAvatars ? "rgba(241,196,45,0.75)" : "rgba(255,255,255,0.42)" }}
-                    >
-                      {isLoadingExpandedAvatars ? "Loading avatars..." : "More avatars are loading. Tap again in a moment."}
+                    <p className="font-display text-[9px] uppercase tracking-[0.2em] text-white/45">
+                      More avatars are coming soon.
                     </p>
                   </div>
                 )}
