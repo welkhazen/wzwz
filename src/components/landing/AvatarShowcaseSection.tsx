@@ -300,7 +300,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
           </p>
           <div
             ref={scrollRef}
-            className="grid grid-cols-4 gap-x-1 gap-y-3"
+            className="grid grid-flow-col grid-rows-2 gap-x-1 gap-y-3"
           >
             {chooserAvatars.map((avatar, i) => (
               <button
