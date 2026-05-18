@@ -36,49 +36,42 @@ export function LevelProgressBanner({ xp, level, compact = false, className }: L
   const progressLabel = isMax ? `${xp.toLocaleString()} XP` : `${current.toLocaleString()} / ${needed.toLocaleString()} XP`;
 
   return (
-    <div className={cn("rounded-2xl border border-raw-border/40 bg-raw-black/35 px-4 py-3", className)}>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-4 gap-y-2">
-        <div className="flex min-w-0 items-center justify-end gap-2">
-          <div className={cn("grid shrink-0 place-items-center", badgeFrameSize)}>
-            <img
-              src={getLevelBanner(safeLevel)}
-              alt={`Level ${safeLevel}`}
-              className={cn("block rounded-full object-contain object-center", badgeImageSize)}
-            />
-          </div>
-          <span className={cn("whitespace-nowrap font-display leading-none tracking-wide text-[#8f96ff]", compact ? "text-[11px]" : "text-xs")}>
+    <div className={cn("rounded-2xl border border-raw-border/40 bg-raw-black/35 px-5 py-4", className)}>
+      {/* Level labels row */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5">
+          <img
+            src={getLevelBanner(safeLevel)}
+            alt={`Level ${safeLevel}`}
+            className={cn("block rounded-full object-contain object-center", badgeImageSize)}
+          />
+          <span className={cn("whitespace-nowrap font-display tracking-wide text-[#8f96ff]", compact ? "text-[11px]" : "text-xs")}>
             Lvl {safeLevel}
           </span>
         </div>
-        <span className={cn("font-display leading-none text-[#8f96ff]", compact ? "text-[11px]" : "text-xs")}>
-          {isMax ? "" : "->"}
-        </span>
-        <div className="flex min-w-0 items-center justify-start gap-2">
-          <div className={cn("grid shrink-0 place-items-center", badgeFrameSize)}>
-            <img
-              src={getLevelBanner(nextLevel)}
-              alt={isMax ? `Level ${safeLevel}` : `Level ${nextLevel}`}
-              className={cn("block rounded-full object-contain object-center opacity-65", badgeImageSize)}
-            />
-          </div>
-          <span className={cn("whitespace-nowrap font-display leading-none tracking-wide text-[#8f96ff]", compact ? "text-[11px]" : "text-xs")}>
+        <div className="flex items-center gap-1.5">
+          <span className={cn("whitespace-nowrap font-display tracking-wide text-[#8f96ff]/60", compact ? "text-[11px]" : "text-xs")}>
             {isMax ? "Max" : `Lvl ${nextLevel}`}
           </span>
+          <img
+            src={getLevelBanner(nextLevel)}
+            alt={isMax ? `Level ${safeLevel}` : `Level ${nextLevel}`}
+            className={cn("block rounded-full object-contain object-center opacity-50", badgeImageSize)}
+          />
         </div>
-        <div className="col-span-3 px-4">
-          <div className="relative h-3 overflow-hidden rounded-full bg-raw-border/20">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-raw-gold/75 to-raw-gold transition-all duration-500 shadow-[0_0_10px_rgba(241,196,45,0.35)]"
-              style={{ width: `${pct}%` }}
-            />
-            <span className={cn(
-              "absolute inset-0 flex items-center justify-center font-semibold leading-none text-raw-silver/65",
-              compact ? "text-[8px]" : "text-[10px]",
-            )}>
-              {progressLabel}
-            </span>
-          </div>
-        </div>
+      </div>
+      {/* Progress bar */}
+      <div className="relative h-3 overflow-hidden rounded-full bg-raw-border/20">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-raw-gold/75 to-raw-gold transition-all duration-500 shadow-[0_0_10px_rgba(241,196,45,0.35)]"
+          style={{ width: `${pct}%` }}
+        />
+        <span className={cn(
+          "absolute inset-0 flex items-center justify-center font-semibold leading-none text-raw-silver/65",
+          compact ? "text-[8px]" : "text-[10px]",
+        )}>
+          {progressLabel}
+        </span>
       </div>
     </div>
   );

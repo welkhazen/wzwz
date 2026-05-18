@@ -6,6 +6,7 @@ type DbRequest = {
   requester_id: string;
   requester_name: string;
   community_name: string;
+  genre: string;
   focus_area: string;
   audience: string;
   why_now: string;
@@ -22,6 +23,7 @@ function mapRequest(r: DbRequest): CommunityRequestRecord {
     requesterId: r.requester_id,
     requesterName: r.requester_name,
     communityName: r.community_name,
+    genre: r.genre,
     focusArea: r.focus_area,
     audience: r.audience,
     whyNow: r.why_now,
@@ -37,6 +39,7 @@ export async function submitCommunityRequest(params: {
   requesterId: string;
   requesterName: string;
   communityName: string;
+  genre: string;
   focusArea: string;
   audience: string;
   whyNow: string;
@@ -48,6 +51,7 @@ export async function submitCommunityRequest(params: {
       requester_id: params.requesterId,
       requester_name: params.requesterName,
       community_name: params.communityName,
+      genre: params.genre,
       focus_area: params.focusArea,
       audience: params.audience,
       why_now: params.whyNow,

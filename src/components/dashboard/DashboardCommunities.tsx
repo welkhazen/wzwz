@@ -111,6 +111,7 @@ interface DashboardCommunitiesProps {
 
 interface CommunityRequestDraft {
   communityName: string;
+  genre: string;
   focusArea: string;
   audience: string;
   whyNow: string;
@@ -135,6 +136,7 @@ interface CommunitySettingsDraft {
 
 const INITIAL_REQUEST_DRAFT: CommunityRequestDraft = {
   communityName: "",
+  genre: "",
   focusArea: "",
   audience: "",
   whyNow: "",
@@ -533,13 +535,14 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
       const trimmedDraft = {
         communityName: requestDraft.communityName.trim(),
+        genre: requestDraft.genre.trim(),
         focusArea: requestDraft.focusArea.trim(),
         audience: requestDraft.audience.trim(),
         whyNow: requestDraft.whyNow.trim(),
         samplePrompt: requestDraft.samplePrompt.trim(),
       };
 
-      if (!trimmedDraft.communityName || !trimmedDraft.focusArea || !trimmedDraft.audience || !trimmedDraft.whyNow) {
+      if (!trimmedDraft.communityName || !trimmedDraft.genre || !trimmedDraft.focusArea || !trimmedDraft.audience || !trimmedDraft.whyNow) {
         setRequestSubmitAttempted(true);
         toast({
           title: "Complete the request form",
@@ -553,6 +556,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           requesterId: user.id,
           requesterName: user.username,
           communityName: trimmedDraft.communityName,
+          genre: trimmedDraft.genre,
           focusArea: trimmedDraft.focusArea,
           audience: trimmedDraft.audience,
           whyNow: trimmedDraft.whyNow,
@@ -1222,6 +1226,20 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                     className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.communityName.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
                   />
                   {requestSubmitAttempted && !requestDraft.communityName.trim() && (
+                    <p className="text-[11px] text-primary/80">Required</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
+                    Genre <span className="text-primary">*</span>
+                  </label>
+                  <Input
+                    value={requestDraft.genre}
+                    onChange={(event) => updateRequestDraft("genre", event.target.value)}
+                    placeholder="e.g. Mental Health, Tech, Sports"
+                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.genre.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
+                  />
+                  {requestSubmitAttempted && !requestDraft.genre.trim() && (
                     <p className="text-[11px] text-primary/80">Required</p>
                   )}
                 </div>

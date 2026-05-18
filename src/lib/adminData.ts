@@ -20,6 +20,7 @@ export interface CommunityRequestRecord {
   requesterId: string;
   requesterName: string;
   communityName: string;
+  genre: string;
   focusArea: string;
   audience: string;
   whyNow: string;
