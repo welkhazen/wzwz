@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { xpProgressInLevel } from "@/lib/userProgress";
-import { MAX_LEVEL } from "@/lib/avataridentity";
 import { track } from "@/lib/analytics";
 import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
@@ -18,6 +16,7 @@ import {
   Sunset,
 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
+import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { TokenBalanceButton } from "@/components/ui/TokenBalanceButton";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/providers/useTheme";
@@ -37,6 +36,7 @@ interface DashboardNavProps {
   username: string;
   avatarLevel: number;
   showAdminLink?: boolean;
+  onAddTestXP?: () => void;
   onProfileClick: () => void;
   onBillingClick: () => void;
   onLogout: () => void;
@@ -47,7 +47,7 @@ interface DashboardNavProps {
   level?: number;
 }
 
-export function DashboardNav({ username, avatarLevel, showAdminLink = false, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities, xp = 0, level = 1 }: DashboardNavProps) {
+export function DashboardNav({ username, avatarLevel, showAdminLink = false, onAddTestXP, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -288,29 +288,22 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                 </div>
               </button>
 
-              {/* XP progress strip */}
-              {(() => {
-                const { current, needed, pct } = xpProgressInLevel(xp, level);
-                const isMax = level >= MAX_LEVEL;
-                return (
-                  <div className={cn("mx-1 mb-1 rounded-lg border px-3 py-2", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}>
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <span className="text-[10px] font-semibold text-raw-gold/70">
-                        Lvl {level}{!isMax ? ` → Lvl ${level + 1}` : " · Max"}
-                      </span>
-                      <span className={cn("text-[10px]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/40")}>
-                        {isMax ? `${xp.toLocaleString()} XP` : `${current.toLocaleString()} / ${needed.toLocaleString()} XP`}
-                      </span>
-                    </div>
-                    <div className="h-1 overflow-hidden rounded-full bg-raw-border/30">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-raw-gold/60 to-raw-gold transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })()}
+              <LevelProgressBanner
+                xp={xp}
+                level={level}
+                compact
+                className={cn("mx-1 mb-1", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}
+              />
+
+              {showAdminLink && onAddTestXP ? (
+                <button
+                  type="button"
+                  onClick={onAddTestXP}
+                  className="mx-1 mb-1 flex w-[calc(100%-0.5rem)] items-center justify-center rounded-xl border border-raw-gold/35 bg-raw-gold/10 px-3 py-2 text-sm font-semibold text-raw-gold transition hover:bg-raw-gold/20"
+                >
+                  +100 XP
+                </button>
+              ) : null}
 
               <DropdownMenuItem
                 onClick={onBillingClick}
