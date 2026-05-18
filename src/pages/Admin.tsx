@@ -31,6 +31,7 @@ import {
   type LandingNewAvatar,
 } from "@/lib/landingNewAvatars";
 import { supabase } from "@/lib/supabase";
+import { awardXP } from "@/lib/userProgress";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import {
   createAdminPoll,
@@ -288,6 +289,22 @@ export default function Admin() {
     [dailySpinPoolDraft]
   );
   const currentReviewItem = slicedAvatars[reviewCursor] ?? null;
+
+  const handleAddTestXP = () => {
+    if (!user) return;
+
+    void awardXP(user.id, 100).then((result) => {
+      if (!result) {
+        toast({ title: "XP test failed", description: "Could not update local XP." });
+        return;
+      }
+
+      toast({
+        title: "+100 XP added",
+        description: `You are now level ${result.level} with ${result.xp.toLocaleString()} XP.`,
+      });
+    });
+  };
 
   const saveDailySpinPoolDraft = () => {
     setIsSavingSpinPool(true);
@@ -1676,6 +1693,13 @@ export default function Admin() {
             <h1 className="mt-2 font-display text-2xl tracking-wide sm:text-3xl">Moderation dashboard</h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={handleAddTestXP}
+              className="rounded-xl border border-raw-gold/40 bg-raw-gold/10 px-3 py-2 text-sm font-semibold text-raw-gold transition hover:bg-raw-gold/20 sm:px-4"
+            >
+              +100 XP
+            </button>
             <Link
               to="/dashboard"
               className="inline-flex items-center gap-2 rounded-xl border border-raw-border/30 px-3 py-2 text-sm text-raw-silver/70 transition-colors hover:text-raw-text sm:px-4"

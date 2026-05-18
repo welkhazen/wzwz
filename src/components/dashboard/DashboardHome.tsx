@@ -7,6 +7,7 @@ import { readCommunityChats } from "@/lib/communityChat";
 import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS, FEATURED_COMMUNITY_IDS } from "@/lib/communityConstants";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
+import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 
 interface DashboardHomeProps {
   username: string;
@@ -16,6 +17,8 @@ interface DashboardHomeProps {
   votedPolls: Set<string>;
   dailyAnsweredCount: number;
   dailyPollLimit: number;
+  xp: number;
+  xpLevel: number;
   onNavigate: (tab: DashboardTab) => void;
   onOpenCommunity: (communityId: string) => void;
 }
@@ -82,6 +85,8 @@ export function DashboardHome({
   userId,
   dailyAnsweredCount,
   dailyPollLimit,
+  xp,
+  xpLevel,
   onNavigate,
   onOpenCommunity,
 }: DashboardHomeProps) {
@@ -299,18 +304,7 @@ export function DashboardHome({
                 <Zap className="size-5 text-raw-gold" />
               </div>
             </div>
-            <div className="space-y-3">
-              <div className="flex justify-between items-end">
-                <span className={`text-xs font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Polls Answered</span>
-                <span className="text-base font-bold text-raw-gold">{dailyAnsweredCount} / {dailyPollLimit}</span>
-              </div>
-              <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLight ? "bg-slate-200" : "bg-white/5"}`}>
-                <div
-                  className="h-full bg-raw-gold rounded-full shadow-[0_0_10px_rgba(241,196,45,0.4)] transition-all duration-500"
-                  style={{ width: `${pollProgress}%` }}
-                />
-              </div>
-            </div>
+            <LevelProgressBanner xp={xp} level={xpLevel} />
             <button
               onClick={() => onNavigate("challenges")}
               className="w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"

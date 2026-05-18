@@ -9,7 +9,10 @@ import {
   Trophy,
   UserPlus,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
+import { getTodayKey } from "@/store/useRawStore.storage";
+import { loadUserXPClaimKeys } from "@/lib/userProgress";
 
 interface DashboardChallengesProps {
   userId: string;
@@ -19,6 +22,7 @@ interface DashboardChallengesProps {
   dailyAnsweredCount: number;
   dailyPollLimit: number;
   onAwardXP?: (amount: number) => Promise<void>;
+  onClaimXP?: (source: string, claimKey: string, amount: number) => Promise<boolean>;
 }
 
 const challengeDefinitions = [
@@ -96,7 +100,9 @@ export function DashboardChallenges({
   dailyAnsweredCount,
   dailyPollLimit,
   onAwardXP,
+  onClaimXP,
 }: DashboardChallengesProps) {
+  const [claimedChallenges, setClaimedChallenges] = useState<Set<string>>(new Set());
   const progressMap: Record<string, number> = {
     "first-session": pollsAnswered > 0 ? 1 : 0,
     "weekly-warrior": Math.min(3, Math.floor(pollsAnswered / 3)),
@@ -107,10 +113,36 @@ export function DashboardChallenges({
     "signal-builder": avatarLevel,
   };
 
+  useEffect(() => {
+    loadUserXPClaimKeys(userId, "challenge").then((claimKeys) => {
+      setClaimedChallenges(new Set(claimKeys));
+    });
+  }, [userId]);
+
   const completedCount = challengeDefinitions.filter((challenge) => {
     const current = progressMap[challenge.id] ?? 0;
     return current >= challenge.target;
   }).length;
+
+  const handleClaimChallenge = (challengeId: string, reward: number) => {
+    const claimKey = `${challengeId}:${getTodayKey()}`;
+    if (claimedChallenges.has(claimKey)) return;
+
+    if (onClaimXP) {
+      void onClaimXP("challenge", claimKey, reward).then((awarded) => {
+        if (awarded) {
+          setClaimedChallenges((previous) => new Set(previous).add(claimKey));
+        }
+      });
+      return;
+    }
+
+    if (onAwardXP) {
+      void onAwardXP(reward).then(() => {
+        setClaimedChallenges((previous) => new Set(previous).add(claimKey));
+      });
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -143,6 +175,8 @@ export function DashboardChallenges({
         {challengeDefinitions.map((challenge) => {
           const current = progressMap[challenge.id] ?? 0;
           const done = current >= challenge.target;
+          const claimKey = `${challenge.id}:${getTodayKey()}`;
+          const claimed = claimedChallenges.has(claimKey);
           const pct = Math.min(100, Math.round((Math.min(current, challenge.target) / challenge.target) * 100));
           const Icon = challenge.Icon;
 
@@ -183,8 +217,13 @@ export function DashboardChallenges({
                   {done ? "Done" : "In Progress"}
                 </div>
                 {done ? (
-                  <button className="rounded-full border border-emerald-300/35 bg-emerald-400/20 px-2.5 py-0.5 text-[10px] font-medium text-emerald-100 transition hover:bg-emerald-400/30">
-                    Claim
+                  <button
+                    type="button"
+                    onClick={() => handleClaimChallenge(challenge.id, challenge.reward)}
+                    disabled={claimed}
+                    className="rounded-full border border-emerald-300/35 bg-emerald-400/20 px-2.5 py-0.5 text-[10px] font-medium text-emerald-100 transition hover:bg-emerald-400/30 disabled:cursor-default disabled:opacity-55"
+                  >
+                    {claimed ? "Claimed" : "Claim"}
                   </button>
                 ) : (
                   <div className="inline-flex items-center gap-1 text-[10px] text-raw-silver/55">
