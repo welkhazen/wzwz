@@ -20,6 +20,7 @@ import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionSh
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
 import { useUserProgress } from "@/store/useUserProgress";
 import { XP_REWARDS } from "@/lib/userProgress";
+import { getTodayKey } from "@/store/useRawStore.storage";
 import type { User, Poll } from "@/store/useRawStore";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 
@@ -37,6 +38,7 @@ interface DashboardProps {
   dailyPollLimit: number;
   isDailyPollLimitReached: boolean;
   tokenBalance: number;
+  addTokens: (amount: number) => void;
   unlockExtraPolls: () => void;
   vote: (pollId: string, optionId: string) => void;
   onLogout: () => void;
@@ -56,6 +58,7 @@ export default function Dashboard({
   dailyPollLimit,
   isDailyPollLimitReached,
   tokenBalance,
+  addTokens,
   unlockExtraPolls,
   vote,
   onLogout,
@@ -66,7 +69,7 @@ export default function Dashboard({
   const themeCycle: ThemeMode[] = ["dark", "dusk", "light"];
   const nextMode = themeCycle[(themeCycle.indexOf(mode) + 1) % themeCycle.length];
   const ModeIcon = mode === "dark" ? Moon : mode === "dusk" ? CloudMoon : Sun;
-  const { progress, leveledUpTo, clearLevelUp, award } = useUserProgress(user.id);
+  const { progress, leveledUpTo, clearLevelUp, award, awardOnce } = useUserProgress(user.id);
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
   const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>([]);
   const [isHome, setIsHome] = useState(true);
@@ -84,6 +87,10 @@ export default function Dashboard({
       return;
     }
   }, [activeCommunityId, location.pathname]);
+
+  useEffect(() => {
+    void awardOnce("daily-login", getTodayKey(), XP_REWARDS.DAILY_LOGIN);
+  }, [awardOnce]);
 
   const handleTabChange = (tab: DashboardTab) => {
     setActiveTab(tab);
@@ -126,6 +133,14 @@ export default function Dashboard({
     navigate("/dashboard");
   };
 
+  const handleDailySpinAward = (amount: number) => {
+    if (user.role === "admin") {
+      return award(amount);
+    }
+
+    return awardOnce("daily-spin", getTodayKey(), amount).then(() => undefined);
+  };
+
   const renderContent = () => {
     if (isHome || activeTab === "home") {
       return (
@@ -138,6 +153,8 @@ export default function Dashboard({
             votedPolls={votedPolls}
             dailyAnsweredCount={dailyAnsweredCount}
             dailyPollLimit={dailyPollLimit}
+            xp={progress?.xp ?? 0}
+            xpLevel={progress?.level ?? 1}
             onNavigate={handleTabChange}
             onOpenCommunity={handleOpenCommunity}
           />
@@ -186,14 +203,20 @@ export default function Dashboard({
               pollsAnswered={votedPolls.size}
               dailyAnsweredCount={dailyAnsweredCount}
               dailyPollLimit={dailyPollLimit}
-              onAwardXP={award}
+              onAwardXP={handleDailySpinAward}
+              onClaimXP={(source, claimKey, amount) => awardOnce(source, claimKey, amount)}
+              onAwardTokens={(amount) => addTokens(amount)}
             />
           </DashboardSectionShell>
         );
       case "daily-spin":
         return (
           <DashboardSectionShell>
-            <DashboardDailySpin userId={user.id} isAdmin={user.role === "admin"} onAwardXP={award} />
+            <DashboardDailySpin
+              userId={user.id}
+              isAdmin={user.role === "admin"}
+              onAwardXP={handleDailySpinAward}
+            />
           </DashboardSectionShell>
         );
       case "inventory":
@@ -231,6 +254,7 @@ export default function Dashboard({
               avatarPricesByLevel={avatarPricesByLevel}
               pollsAnswered={votedPolls.size}
               xp={progress?.xp ?? 0}
+              xpLevel={progress?.level ?? 1}
               onLogout={onLogout}
             />
           </DashboardSectionShell>
@@ -246,7 +270,10 @@ export default function Dashboard({
               votedPolls={votedPolls}
               dailyAnsweredCount={dailyAnsweredCount}
               dailyPollLimit={dailyPollLimit}
+              xp={progress?.xp ?? 0}
+              xpLevel={progress?.level ?? 1}
               onNavigate={handleTabChange}
+              onOpenCommunity={handleOpenCommunity}
             />
           </DashboardSectionShell>
         );
@@ -264,6 +291,7 @@ export default function Dashboard({
         username={user.username}
         avatarLevel={avatarLevel}
         showAdminLink={user.role === "admin"}
+        onAddTestXP={() => void award(100)}
         onProfileClick={handleProfileClick}
         onBillingClick={handleBillingClick}
         onLogout={onLogout}

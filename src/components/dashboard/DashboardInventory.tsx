@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Archive, Lock, Sparkles } from "lucide-react";
-import { RawInsightsPanel } from "@/components/dashboard/insights/RawInsightsPanel";
+import { Archive, BookOpen, Brain, CircleGauge, Fingerprint, Lock, Map, Sparkles, WandSparkles } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
+import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { RARITY_CONFIG, RARITY_ORDER } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import type { Poll } from "@/store/useRawStore";
@@ -17,6 +17,172 @@ interface DashboardInventoryProps {
   avatarCatalog: AvatarCatalogItem[];
   tokenBalance: number;
   userId: string;
+}
+
+const PERSONALITY_INSIGHTS = [
+  {
+    id: "myers-briggs",
+    name: "Myers-Briggs",
+    icon: Brain,
+    description: "Discover your personality type across 4 key dimensions of how you see the world.",
+    requiredPolls: 10,
+    tokenPrice: 10,
+    accent: "from-orange-400/25 via-amber-300/10 to-transparent",
+    iconColor: "text-orange-400",
+    border: "border-orange-300/45",
+  },
+  {
+    id: "big-five-profile",
+    name: "Big Five Profile",
+    icon: Fingerprint,
+    description: "Measure your openness, conscientiousness, extraversion, agreeableness, and emotional range.",
+    requiredPolls: 30,
+    tokenPrice: 30,
+    accent: "from-sky-400/25 via-cyan-300/10 to-transparent",
+    iconColor: "text-sky-400",
+    border: "border-sky-300/45",
+  },
+  {
+    id: "emotional-intelligence",
+    name: "Emotional Intelligence",
+    icon: CircleGauge,
+    description: "Understand how you process emotions, empathy, and interpersonal cues under pressure.",
+    requiredPolls: 70,
+    tokenPrice: 70,
+    accent: "from-emerald-400/25 via-lime-300/10 to-transparent",
+    iconColor: "text-emerald-400",
+    border: "border-emerald-300/45",
+  },
+  {
+    id: "shadow-self",
+    name: "Shadow Self",
+    icon: WandSparkles,
+    description: "Reveal hidden patterns, blind spots, and traits that surface in difficult moments.",
+    requiredPolls: 100,
+    tokenPrice: 100,
+    accent: "from-fuchsia-400/25 via-violet-300/10 to-transparent",
+    iconColor: "text-fuchsia-400",
+    border: "border-fuchsia-300/45",
+  },
+  {
+    id: "attachment-style",
+    name: "Attachment Style",
+    icon: BookOpen,
+    description: "Understand your patterns in relationships and emotional bonding with others.",
+    requiredPolls: 150,
+    tokenPrice: 150,
+    accent: "from-rose-400/25 via-pink-300/10 to-transparent",
+    iconColor: "text-rose-400",
+    border: "border-rose-300/45",
+  },
+  {
+    id: "cognitive-bias-map",
+    name: "Cognitive Bias Map",
+    icon: Map,
+    description: "Identify the mental shortcuts and biases that shape your decisions and thinking.",
+    requiredPolls: 200,
+    tokenPrice: 200,
+    accent: "from-indigo-400/25 via-blue-300/10 to-transparent",
+    iconColor: "text-indigo-400",
+    border: "border-indigo-300/45",
+  },
+];
+
+function PersonalityInsightsInventory({
+  pollsAnswered,
+  totalPolls,
+  tokenBalance,
+}: {
+  pollsAnswered: number;
+  totalPolls: number;
+  tokenBalance: number;
+}) {
+  const readyCount = PERSONALITY_INSIGHTS.filter(
+    (insight) => pollsAnswered >= insight.requiredPolls && tokenBalance >= insight.tokenPrice
+  ).length;
+
+  return (
+    <div className="overflow-hidden rounded-[1.75rem] border border-raw-border/35 bg-raw-black/35">
+      <div className="relative overflow-hidden border-b border-raw-border/30 bg-gradient-to-br from-raw-gold/18 via-sky-400/10 to-fuchsia-500/10 p-5 sm:p-6">
+        <div className="pointer-events-none absolute inset-0 [background-image:radial-gradient(rgba(255,255,255,0.14)_0.8px,transparent_0.8px)] [background-size:9px_9px]" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-raw-gold/85">
+              <Sparkles className="h-3.5 w-3.5" />
+              Personality Insights
+            </p>
+            <h2 className="mt-3 font-display text-2xl text-raw-text">Identity Report Vault</h2>
+            <p className="mt-1.5 max-w-2xl text-sm text-raw-silver/55">
+              Unlock deeper personality reports with poll activity and tokens.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-right backdrop-blur">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-raw-silver/45">Progress</p>
+            <p className="mt-1 font-display text-lg text-raw-text">{readyCount}/{PERSONALITY_INSIGHTS.length} ready</p>
+            <p className="text-[10px] text-raw-silver/45">{pollsAnswered} polls answered</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
+        {PERSONALITY_INSIGHTS.map((insight) => {
+          const Icon = insight.icon;
+          const hasPolls = pollsAnswered >= insight.requiredPolls;
+          const hasTokens = tokenBalance >= insight.tokenPrice;
+          const ready = hasPolls && hasTokens;
+          const progress = Math.min(100, (pollsAnswered / insight.requiredPolls) * 100);
+
+          return (
+            <article
+              key={insight.id}
+              className={`relative overflow-hidden rounded-2xl border ${insight.border} bg-gradient-to-br ${insight.accent} p-4 shadow-[0_14px_36px_rgba(0,0,0,0.18)]`}
+            >
+              <div className="pointer-events-none absolute inset-0 bg-raw-black/20" />
+              <div className="relative flex min-h-[152px] flex-col">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 ${insight.iconColor}`}>
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="font-display text-base leading-tight text-raw-text">{insight.name}</h3>
+                      <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-raw-silver/45">
+                        {insight.requiredPolls} polls req.
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] ${
+                    ready ? "border-emerald-300/45 bg-emerald-400/15 text-emerald-200" : "border-white/15 bg-black/20 text-raw-silver/55"
+                  }`}>
+                    {ready ? "Ready" : "Locked"}
+                  </span>
+                </div>
+
+                <p className="mt-3 flex-1 text-xs leading-relaxed text-raw-silver/65">{insight.description}</p>
+
+                <div className="mt-4">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div className={`h-full rounded-full ${ready ? "bg-emerald-300" : "bg-raw-gold"}`} style={{ width: `${Math.max(5, progress)}%` }} />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-raw-silver/50">
+                    <span>{Math.min(pollsAnswered, insight.requiredPolls)}/{insight.requiredPolls} polls</span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-2 py-0.5 text-raw-gold/85">
+                      <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
+                      {insight.tokenPrice} tokens
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-raw-border/30 px-4 py-3 text-center text-xs text-raw-silver/45">
+        {totalPolls} polls available. Keep answering polls to open the full report vault.
+      </div>
+    </div>
+  );
 }
 
 // ─── Avatar Shop ────────────────────────────────────────────────────────────
@@ -100,6 +266,7 @@ function AvatarShop({
 
 const SPIN_COST = 50;
 const SPIN_PRIZES = RARITY_ORDER.map((r) => ({
+  id: r,
   rarity: r,
   label: RARITY_CONFIG[r].label,
   color: RARITY_CONFIG[r].color,
@@ -107,46 +274,24 @@ const SPIN_PRIZES = RARITY_ORDER.map((r) => ({
   weight: RARITY_CONFIG[r].defaultWeight,
 }));
 
-function weightedRoll() {
-  const total = SPIN_PRIZES.reduce((s, p) => s + p.weight, 0);
-  let rand = Math.random() * total;
-  for (const prize of SPIN_PRIZES) {
-    rand -= prize.weight;
-    if (rand <= 0) return prize;
-  }
-  return SPIN_PRIZES[0];
-}
-
 function LootSpin({ tokenBalance }: { tokenBalance: number }) {
-  const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<(typeof SPIN_PRIZES)[number] | null>(null);
-  const [slots, setSlots] = useState<(typeof SPIN_PRIZES)[number][]>([
-    SPIN_PRIZES[0], SPIN_PRIZES[0], SPIN_PRIZES[0],
-  ]);
 
-  const canSpin = tokenBalance >= SPIN_COST && !spinning;
+  const canSpin = tokenBalance >= SPIN_COST;
+  const wheelPrizes: WheelPrize[] = SPIN_PRIZES.map((prize) => ({
+    id: prize.id,
+    label: `${prize.label} Drop`,
+    shortLabel: prize.label.toUpperCase(),
+    color: `${prize.color}26`,
+    textColor: prize.color,
+  }));
+  const prizeWeights = SPIN_PRIZES.reduce<Partial<Record<string, number>>>((acc, prize) => {
+    acc[prize.id] = prize.weight;
+    return acc;
+  }, {});
 
-  const handleSpin = () => {
-    if (!canSpin) return;
-    setSpinning(true);
-    setResult(null);
-
-    let tick = 0;
-    const interval = window.setInterval(() => {
-      setSlots([
-        SPIN_PRIZES[Math.floor(Math.random() * SPIN_PRIZES.length)],
-        SPIN_PRIZES[Math.floor(Math.random() * SPIN_PRIZES.length)],
-        SPIN_PRIZES[Math.floor(Math.random() * SPIN_PRIZES.length)],
-      ]);
-      tick++;
-      if (tick >= 20) {
-        clearInterval(interval);
-        const prize = weightedRoll();
-        setSlots([prize, prize, prize]);
-        setResult(prize);
-        setSpinning(false);
-      }
-    }, 80);
+  const handleSpinEnd = (prize: WheelPrize) => {
+    setResult(SPIN_PRIZES.find((entry) => entry.id === prize.id) ?? SPIN_PRIZES[0]);
   };
 
   return (
@@ -160,50 +305,30 @@ function LootSpin({ tokenBalance }: { tokenBalance: number }) {
         </span>
       </div>
 
-      {/* Slot display */}
-      <div className="mb-4 flex items-center justify-center gap-3">
-        {slots.map((slot, i) => (
-          <div
-            key={i}
-            className="flex h-16 w-16 items-center justify-center rounded-xl border text-xl font-bold transition-all duration-75"
-            style={{
-              borderColor: `${slot.color}50`,
-              background: `${slot.glow}22`,
-              color: slot.color,
-              boxShadow: spinning ? `0 0 12px ${slot.glow}` : "none",
-            }}
-          >
-            {slot.label.slice(0, 2)}
-          </div>
-        ))}
+      <div className="flex justify-center">
+        <WheelOfFortune
+          prizes={wheelPrizes}
+          prizeWeights={prizeWeights}
+          onSpinEnd={handleSpinEnd}
+          disabled={!canSpin}
+          radius={145}
+        />
       </div>
 
-      {result && !spinning && (
+      {result && (
         <div
-          className="mb-4 rounded-xl border px-4 py-3 text-center text-sm font-semibold"
+          className="mt-4 rounded-xl border px-4 py-3 text-center text-sm font-semibold"
           style={{ borderColor: `${result.color}50`, color: result.color, background: `${result.glow}18` }}
         >
           {result.label} Rarity Drop!
         </div>
       )}
-
-      <button
-        onClick={handleSpin}
-        disabled={!canSpin}
-        className="w-full rounded-xl border border-raw-gold/35 bg-raw-gold/10 py-2.5 text-sm font-semibold text-raw-gold transition hover:bg-raw-gold/20 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {spinning ? "Rolling..." : tokenBalance < SPIN_COST ? (
-          <span className="flex items-center justify-center gap-1.5">
-            <Lock className="h-3.5 w-3.5" />
-            Need {SPIN_COST} tokens
-          </span>
-        ) : (
-          <span className="flex items-center justify-center gap-1.5">
-            <img src={TokenImage} alt="" className="h-4 w-4 object-contain" />
-            Spin for {SPIN_COST} tokens
-          </span>
-        )}
-      </button>
+      {!canSpin && (
+        <div className="mt-4 flex items-center justify-center gap-1.5 rounded-xl border border-raw-border/30 bg-raw-surface/20 py-2.5 text-sm font-semibold text-raw-silver/45">
+          <Lock className="h-3.5 w-3.5" />
+          Need {SPIN_COST} tokens
+        </div>
+      )}
     </div>
   );
 }
@@ -213,13 +338,14 @@ function LootSpin({ tokenBalance }: { tokenBalance: number }) {
 export function DashboardInventory({
   polls,
   votedPolls,
-  avatarLevel,
   ownedAvatarLevels,
   onUnlockAvatar,
   avatarPricesByLevel,
   avatarCatalog,
   tokenBalance,
 }: DashboardInventoryProps) {
+  const pollsAnswered = votedPolls.size;
+
   return (
     <div className="space-y-8">
       <header>
@@ -231,18 +357,6 @@ export function DashboardInventory({
           Your insights, collectible avatars, and loot rolls.
         </p>
       </header>
-
-      {/* Personality Insights */}
-      <section>
-        <RawInsightsPanel
-          polls={polls}
-          votedPolls={votedPolls}
-          votedOptions={{}}
-          avatarLevel={avatarLevel}
-          purchasedInsightIds={new Set()}
-          onPurchaseInsight={() => {}}
-        />
-      </section>
 
       {/* Avatar Shop */}
       <section>
@@ -259,6 +373,15 @@ export function DashboardInventory({
       <section>
         <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Loot Spin</h2>
         <LootSpin tokenBalance={tokenBalance} />
+      </section>
+
+      {/* Personality Insights */}
+      <section>
+        <PersonalityInsightsInventory
+          pollsAnswered={pollsAnswered}
+          totalPolls={polls.length}
+          tokenBalance={tokenBalance}
+        />
       </section>
     </div>
   );

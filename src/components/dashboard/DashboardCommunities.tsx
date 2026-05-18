@@ -46,6 +46,13 @@ import {
   COMMUNITY_COVER_VIDEOS,
 } from "@/lib/communityConstants";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
+import {
+  loadCommunityAccess,
+  unlockCommunity,
+  FREE_COMMUNITY_SLOTS,
+  COMMUNITY_UNLOCK_TOKEN_COST,
+  type CommunityAccess,
+} from "@/lib/communityAccess";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 
@@ -111,6 +118,7 @@ interface DashboardCommunitiesProps {
 
 interface CommunityRequestDraft {
   communityName: string;
+  genre: string;
   focusArea: string;
   audience: string;
   whyNow: string;
@@ -135,6 +143,7 @@ interface CommunitySettingsDraft {
 
 const INITIAL_REQUEST_DRAFT: CommunityRequestDraft = {
   communityName: "",
+  genre: "",
   focusArea: "",
   audience: "",
   whyNow: "",
@@ -174,6 +183,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [waitlistCounts, setWaitlistCounts] = useState<Record<string, number>>({});
   const [waitlistJoinedIds, setWaitlistJoinedIds] = useState<Set<string>>(new Set());
   const [waitlistJoiningId, setWaitlistJoiningId] = useState<string | null>(null);
+  const [communityAccess, setCommunityAccess] = useState<CommunityAccess>({ hasSubscription: false, unlockedIds: new Set<string>() });
+  const [unlockingId, setUnlockingId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -183,10 +194,11 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const messageInputRef = useRef<HTMLInputElement | null>(null);
 
     const reloadChatData = useCallback(async () => {
-      const [communitiesData, requestsData, waitlistData] = await Promise.all([
+      const [communitiesData, requestsData, waitlistData, accessData] = await Promise.all([
         fetchCommunities(),
         fetchCommunityRequests(user.id),
         fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
+        loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
       ]);
       setCommunities(communitiesData);
       onCommunitiesChange?.(communitiesData);
@@ -195,6 +207,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       setCommunityJoinRequests(readCommunityJoinRequests());
       setWaitlistCounts(waitlistData.counts);
       setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
+      setCommunityAccess(accessData);
     }, [onCommunitiesChange, user.id]);
 
     const selectedCommunity = useMemo(
@@ -391,6 +404,36 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     };
 
+    const handleUnlockCommunity = async (communityId: string) => {
+      if (unlockingId === communityId) return;
+      setUnlockingId(communityId);
+      try {
+        const result = await unlockCommunity(user.id, communityId);
+        if (!result.ok) {
+          if (result.error === "insufficient_tokens") {
+            toast({
+              title: "Not enough tokens",
+              description: `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens. Buy more in Billing.`,
+            });
+            return;
+          }
+          // RPC missing or network error — open anyway, access check will re-run on next load
+          onOpenCommunity(communityId);
+          return;
+        }
+        setCommunityAccess((prev) => ({
+          ...prev,
+          unlockedIds: new Set([...prev.unlockedIds, communityId]),
+        }));
+        onOpenCommunity(communityId);
+      } catch {
+        // Fallback: open the community rather than blocking the user
+        onOpenCommunity(communityId);
+      } finally {
+        setUnlockingId(null);
+      }
+    };
+
     const handleSendMessage = async () => {
       if (!selectedCommunity) {
         return;
@@ -533,13 +576,14 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
       const trimmedDraft = {
         communityName: requestDraft.communityName.trim(),
+        genre: requestDraft.genre.trim(),
         focusArea: requestDraft.focusArea.trim(),
         audience: requestDraft.audience.trim(),
         whyNow: requestDraft.whyNow.trim(),
         samplePrompt: requestDraft.samplePrompt.trim(),
       };
 
-      if (!trimmedDraft.communityName || !trimmedDraft.focusArea || !trimmedDraft.audience || !trimmedDraft.whyNow) {
+      if (!trimmedDraft.communityName || !trimmedDraft.genre || !trimmedDraft.focusArea || !trimmedDraft.audience || !trimmedDraft.whyNow) {
         setRequestSubmitAttempted(true);
         toast({
           title: "Complete the request form",
@@ -553,6 +597,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           requesterId: user.id,
           requesterName: user.username,
           communityName: trimmedDraft.communityName,
+          genre: trimmedDraft.genre,
           focusArea: trimmedDraft.focusArea,
           audience: trimmedDraft.audience,
           whyNow: trimmedDraft.whyNow,
@@ -619,6 +664,9 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         <div className="grid grid-cols-2 items-stretch gap-4 sm:gap-5 lg:grid-cols-2 xl:grid-cols-3">
           {directoryCommunities.map((community) => {
             const joined = community.members.some((member) => member.userId === user.id);
+            // Count joined communities toward free quota so existing members don't get unlimited free slots on new communities
+            const joinedCount = directoryCommunities.filter(c => c.members.some(m => m.userId === user.id)).length;
+            const effectiveUnlockCount = Math.max(communityAccess.unlockedIds.size, joinedCount);
             const communityUnreadCount = joined ? countUnreadMessages(community, user.id) : 0;
             const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
             const coverVideo = COMMUNITY_COVER_VIDEOS[community.id];
@@ -726,14 +774,50 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                           </p>
                         </div>
                       );
-                    })() : (
-                      <Button
-                        onClick={() => onOpenCommunity(community.id)}
-                        className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
-                      >
-                        Open Chat
-                      </Button>
-                    )}
+                    })() : (() => {
+                      const isUnlocked = joined || communityAccess.hasSubscription || communityAccess.unlockedIds.has(community.id);
+                      const canGetFree = !isUnlocked && effectiveUnlockCount < FREE_COMMUNITY_SLOTS;
+                      const freeRemaining = Math.max(0, FREE_COMMUNITY_SLOTS - effectiveUnlockCount);
+                      const isUnlocking = unlockingId === community.id;
+                      if (isUnlocked) {
+                        return (
+                          <Button
+                            onClick={() => onOpenCommunity(community.id)}
+                            className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
+                          >
+                            Open Chat
+                          </Button>
+                        );
+                      }
+                      if (canGetFree) {
+                        return (
+                          <div className="space-y-1.5">
+                            <Button
+                              onClick={() => handleUnlockCommunity(community.id)}
+                              disabled={isUnlocking}
+                              className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90 disabled:opacity-70"
+                            >
+                              {isUnlocking ? "Opening…" : "Open Chat — Free"}
+                            </Button>
+                            <p className="text-center text-[10px] text-raw-silver/40">
+                              {freeRemaining} free slot{freeRemaining === 1 ? "" : "s"} remaining
+                            </p>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="space-y-1.5">
+                          <Button
+                            onClick={() => handleUnlockCommunity(community.id)}
+                            disabled={isUnlocking}
+                            className="w-full rounded-xl border border-raw-gold/40 bg-transparent px-2 py-2 text-xs text-raw-gold hover:bg-raw-gold/10 disabled:opacity-70"
+                          >
+                            <Lock className="h-3 w-3" /> {isUnlocking ? "Unlocking…" : `Unlock — ${COMMUNITY_UNLOCK_TOKEN_COST} tokens`}
+                          </Button>
+                          <p className="text-center text-[10px] text-raw-silver/40">or subscribe for all access</p>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -1222,6 +1306,20 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                     className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.communityName.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
                   />
                   {requestSubmitAttempted && !requestDraft.communityName.trim() && (
+                    <p className="text-[11px] text-primary/80">Required</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
+                    Genre <span className="text-primary">*</span>
+                  </label>
+                  <Input
+                    value={requestDraft.genre}
+                    onChange={(event) => updateRequestDraft("genre", event.target.value)}
+                    placeholder="e.g. Mental Health, Tech, Sports"
+                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.genre.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
+                  />
+                  {requestSubmitAttempted && !requestDraft.genre.trim() && (
                     <p className="text-[11px] text-primary/80">Required</p>
                   )}
                 </div>

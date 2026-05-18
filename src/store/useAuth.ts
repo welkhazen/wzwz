@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { identify, reset, track } from "@/lib/analytics";
+import { awardXPOnce, recordLocalLoginDay, XP_REWARDS } from "@/lib/userProgress";
+import { getTodayKey } from "@/store/useRawStore.storage";
 import type { AuthResult, User } from "@/store/types";
 import {
   signIn,
@@ -25,6 +27,12 @@ function toUser(a: AuthUser): User {
   };
 }
 
+function awardDailyLoginXP(userId: string): void {
+  const todayKey = getTodayKey();
+  recordLocalLoginDay(userId, todayKey);
+  void awardXPOnce(userId, "daily-login", todayKey, XP_REWARDS.DAILY_LOGIN);
+}
+
 export function useAuth() {
   const queryClient = useQueryClient();
   const [showSignup, setShowSignup] = useState(false);
@@ -44,6 +52,7 @@ export function useAuth() {
               localStorage.setItem(key, "1");
             }
           }
+          awardDailyLoginXP(u.id);
           identify(u.id, { username: u.username });
         }
       })
@@ -62,6 +71,7 @@ export function useAuth() {
       if (typeof window !== "undefined") {
         localStorage.setItem(`raw.onboarding.completed.${u.username}`, "1");
       }
+      awardDailyLoginXP(u.id);
       identify(u.id, { username: u.username });
       track("login_completed", { method: "username_password" });
       setShowSignup(false);
@@ -79,6 +89,7 @@ export function useAuth() {
       if (typeof window !== "undefined") {
         localStorage.removeItem(`raw.onboarding.completed.${username}`);
       }
+      awardDailyLoginXP(u.id);
       identify(u.id, { username: u.username });
       track("signup_completed", { source: "modal" });
       setShowSignup(false);

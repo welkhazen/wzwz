@@ -1,12 +1,13 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
-import { ChevronRight, Dices, Zap, Flame, Users, BarChart3, Sparkles } from "lucide-react";
+import { ChevronRight, Dices, Zap, Flame, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import { readCommunityChats } from "@/lib/communityChat";
-import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS, FEATURED_COMMUNITY_IDS } from "@/lib/communityConstants";
+import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityConstants";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
+import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 
 interface DashboardHomeProps {
   username: string;
@@ -16,6 +17,8 @@ interface DashboardHomeProps {
   votedPolls: Set<string>;
   dailyAnsweredCount: number;
   dailyPollLimit: number;
+  xp: number;
+  xpLevel: number;
   onNavigate: (tab: DashboardTab) => void;
   onOpenCommunity: (communityId: string) => void;
 }
@@ -78,10 +81,100 @@ function CommunityCard({
   );
 }
 
+const UPCOMING_COMMUNITIES = [
+  {
+    abbr: "UH",
+    title: "Unfiltered Hours",
+    description: "Late thoughts, honest takes, no profile pressure.",
+    accent: "from-amber-100 via-rose-50 to-white",
+  },
+  {
+    abbr: "RR",
+    title: "Reality Check Room",
+    description: "Quick gut checks for the choices people overthink.",
+    accent: "from-sky-100 via-indigo-50 to-white",
+  },
+  {
+    abbr: "NT",
+    title: "No-Name Therapy",
+    description: "A softer place for venting without being known.",
+    accent: "from-violet-100 via-fuchsia-50 to-white",
+  },
+  {
+    abbr: "PV",
+    title: "Plot Twist Votes",
+    description: "Strange dilemmas, funny turns, and anonymous calls.",
+    accent: "from-emerald-100 via-teal-50 to-white",
+  },
+];
+
+function UpcomingCommunitiesPreview({
+  isLight,
+}: {
+  isLight: boolean;
+}) {
+  const cardPositions = [
+    "left-3 top-5 rotate-[-7deg]",
+    "right-5 top-4 rotate-[6deg]",
+    "left-12 bottom-4 rotate-[5deg]",
+    "right-16 bottom-5 rotate-[-5deg]",
+  ];
+
+  return (
+    <div
+      className={`relative min-h-[260px] overflow-hidden rounded-[2rem] border ${
+        isLight
+          ? "border-slate-200 bg-white/85 shadow-[0_18px_44px_rgba(15,23,42,0.1)]"
+          : "border-white/10 bg-[#181818]"
+      }`}
+    >
+      <div className={`absolute inset-0 bg-gradient-to-br ${isLight ? "from-white via-slate-50 to-indigo-50" : "from-white/5 via-raw-gold/5 to-indigo-500/10"}`} />
+      <div className="absolute inset-0 select-none blur-[7px]" aria-hidden="true">
+        {UPCOMING_COMMUNITIES.map((community, index) => (
+          <div
+            key={community.title}
+            className={`absolute h-32 w-52 rounded-3xl border p-4 opacity-55 ${cardPositions[index]} ${
+              isLight
+                ? "border-slate-200 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.12)]"
+                : "border-white/10 bg-white/10"
+            }`}
+          >
+            <div className={`absolute inset-x-0 top-0 h-16 bg-gradient-to-br ${community.accent} ${isLight ? "opacity-90" : "opacity-25"}`} />
+            <div className="relative flex h-full flex-col justify-between">
+              <div className={`flex size-11 items-center justify-center rounded-2xl border font-display text-sm font-black ${
+                isLight ? "border-slate-200 bg-white text-slate-800" : "border-white/10 bg-white/10 text-white"
+              }`}>
+                {community.abbr}
+              </div>
+              <div>
+                <h3 className={`text-xs font-bold ${isLight ? "text-slate-950" : "text-white"}`}>{community.title}</h3>
+                <p className={`mt-1 text-[10px] leading-snug ${isLight ? "text-slate-500" : "text-white/45"}`}>{community.description}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white/85 to-transparent" />
+      <div className="relative flex min-h-[260px] items-center justify-center p-6">
+        <div className={`flex min-h-[150px] w-full max-w-xl flex-col items-center justify-center rounded-[1.75rem] border px-6 text-center backdrop-blur-xl ${
+          isLight
+            ? "border-raw-gold/25 bg-white/88 shadow-[0_18px_45px_rgba(15,23,42,0.12)]"
+            : "border-raw-gold/25 bg-black/70"
+        }`}>
+          <Users className="mb-3 size-5 text-raw-gold" />
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-raw-gold">Coming Soon</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function DashboardHome({
   userId,
   dailyAnsweredCount,
   dailyPollLimit,
+  xp,
+  xpLevel,
   onNavigate,
   onOpenCommunity,
 }: DashboardHomeProps) {
@@ -121,12 +214,6 @@ export function DashboardHome({
 
   const trending = useMemo(
     () => [...allCommunities].sort((a, b) => b.members.length - a.members.length).slice(0, 4),
-    [allCommunities],
-  );
-
-  // Always show featured communities as picks regardless of trending overlap
-  const picks = useMemo(
-    () => FEATURED_COMMUNITY_IDS.map((id) => allCommunities.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c),
     [allCommunities],
   );
 
@@ -187,38 +274,19 @@ export function DashboardHome({
         </div>
       </section>
 
-      {/* ── Personalized Picks ── */}
-      {picks.length > 0 && (
-        <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
-          <div className="flex justify-between items-end">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-raw-gold" />
-                <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Personalized Picks</h2>
-              </div>
-              <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Based on your recent activity.</p>
+      {/* Communities for You */}
+      <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
+        <div className="flex justify-between items-end">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <Users className="size-4 text-raw-gold" />
+              <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Communities for You</h2>
             </div>
-            <button
-              onClick={() => onNavigate("communities")}
-              className="text-sm text-raw-gold hover:underline flex items-center gap-1 font-bold"
-            >
-              View All <ChevronRight className="size-4" />
-            </button>
+            <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Fresh rooms being shaped for the next drop.</p>
           </div>
-          <div className="relative">
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 pointer-events-none select-none opacity-40 blur-[2px]" aria-hidden="true" inert={true}>
-              {picks.map((community) => (
-                <CommunityCard key={community.id} community={community} isLight={isLight} onOpenCommunity={onOpenCommunity} />
-              ))}
-            </div>
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" role="status" aria-live="polite">
-              <span className={`rounded-full border border-raw-gold/40 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-raw-gold backdrop-blur-sm ${isLight ? "bg-white/90" : "bg-raw-black/80"}`}>
-                Coming Soon
-              </span>
-            </div>
-          </div>
-        </section>
-      )}
+        </div>
+        <UpcomingCommunitiesPreview isLight={isLight} />
+      </section>
 
       {/* ── Daily Poll Progress ── */}
       <section className="space-y-4">
@@ -299,18 +367,7 @@ export function DashboardHome({
                 <Zap className="size-5 text-raw-gold" />
               </div>
             </div>
-            <div className="space-y-3">
-              <div className="flex justify-between items-end">
-                <span className={`text-xs font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Polls Answered</span>
-                <span className="text-base font-bold text-raw-gold">{dailyAnsweredCount} / {dailyPollLimit}</span>
-              </div>
-              <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLight ? "bg-slate-200" : "bg-white/5"}`}>
-                <div
-                  className="h-full bg-raw-gold rounded-full shadow-[0_0_10px_rgba(241,196,45,0.4)] transition-all duration-500"
-                  style={{ width: `${pollProgress}%` }}
-                />
-              </div>
-            </div>
+            <LevelProgressBanner xp={xp} level={xpLevel} />
             <button
               onClick={() => onNavigate("challenges")}
               className="w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"

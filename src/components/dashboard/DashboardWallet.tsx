@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Zap } from "lucide-react";
 import TokenImage from "@/assets/tokens.png";
 import { useRawStore } from "@/store/useRawStore";
 
 const PACKAGES = [
-  { id: "tokens-100",  tokens: 100,  price: 10, label: "Starter",    highlight: false, accent: "from-sky-500/20 via-blue-500/10 to-transparent",       perToken: "10¢ / token" },
-  { id: "tokens-200",  tokens: 200,  price: 20, label: "Popular",    highlight: false, accent: "from-violet-500/20 via-fuchsia-500/10 to-transparent",  perToken: "10¢ / token" },
-  { id: "tokens-500",  tokens: 500,  price: 40, label: "Best Value", highlight: true,  accent: "from-raw-gold/25 via-amber-500/10 to-transparent",      perToken: "8¢ / token"  },
-  { id: "tokens-1000", tokens: 1000, price: 80, label: "Power User", highlight: false, accent: "from-emerald-500/20 via-teal-500/10 to-transparent",    perToken: "8¢ / token"  },
+  { id: "tokens-50",   tokens: 50,   price: 5,   label: "Starter",    highlight: false, accent: "from-sky-500/20 via-blue-500/10 to-transparent",       perToken: "10¢ / token" },
+  { id: "tokens-100",  tokens: 100,  price: 10,  label: "Basic",      highlight: false, accent: "from-violet-500/20 via-fuchsia-500/10 to-transparent",  perToken: "10¢ / token" },
+  { id: "tokens-200",  tokens: 200,  price: 20,  label: "Popular",    highlight: false, accent: "from-raw-gold/25 via-amber-500/10 to-transparent",      perToken: "10¢ / token" },
+  { id: "tokens-500",  tokens: 500,  price: 50,  label: "Best Value", highlight: true,  accent: "from-emerald-500/20 via-teal-500/10 to-transparent",    perToken: "10¢ / token" },
+  { id: "tokens-1000", tokens: 1000, price: 100, label: "Power User", highlight: false, accent: "from-rose-500/20 via-pink-500/10 to-transparent",       perToken: "10¢ / token" },
 ] as const;
 
 export function DashboardWallet() {
@@ -33,6 +34,55 @@ export function DashboardWallet() {
             <p className="mt-1 text-xs text-raw-silver/40">tokens</p>
           </div>
           <img src={TokenImage} alt="Token" className="h-12 w-12 shrink-0 object-contain sm:h-14 sm:w-14" />
+        </div>
+      </section>
+
+      {/* Monthly Subscription */}
+      <section>
+        <div className="relative overflow-hidden rounded-3xl border border-raw-gold/30 bg-raw-black">
+          {/* layered glow */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(241,196,45,0.22),transparent)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_90%_110%,rgba(241,196,45,0.10),transparent)]" />
+          {/* dot grid */}
+          <div className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:radial-gradient(rgba(255,255,255,0.8)_0.7px,transparent_0.7px)] [background-size:10px_10px]" />
+
+          <div className="relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">
+            {/* badge */}
+            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-raw-gold/40 bg-raw-gold/[0.08] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold">
+              <Zap className="h-2.5 w-2.5 fill-current" /> All Access
+            </div>
+
+            {/* price + perks row */}
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="font-display text-5xl tracking-tight text-raw-text sm:text-6xl">
+                  $5
+                  <span className="ml-2 text-base font-normal tracking-normal text-raw-silver/40">/ mo</span>
+                </p>
+                <div className="mt-4 flex flex-col gap-1.5">
+                  <span className="flex items-center gap-2 text-xs text-raw-silver/55">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-raw-gold/70" />
+                    Every community, no limits
+                  </span>
+                  <span className="flex items-center gap-2 text-xs text-raw-silver/55">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-raw-gold/70" />
+                    Cancel anytime
+                  </span>
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div className="flex flex-col gap-1.5 sm:items-end">
+                <button
+                  disabled
+                  className="w-full cursor-not-allowed rounded-2xl border border-raw-gold/25 bg-raw-gold/10 px-8 py-3.5 text-sm font-semibold text-raw-gold/50 sm:w-auto"
+                >
+                  Coming Soon
+                </button>
+                <p className="text-center text-[10px] text-raw-silver/25 sm:text-right">Stripe · Secure checkout</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

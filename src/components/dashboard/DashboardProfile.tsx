@@ -14,8 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
 
 import { AvatarFigure } from "@/components/ui/avatar-figure";
+import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { LEVEL_THEMES, MAX_LEVEL, getAvatar } from "@/lib/avataridentity";
-import { xpProgressInLevel } from "@/lib/userProgress";
 
 interface DashboardProfileProps {
   userId: string;
@@ -27,6 +27,7 @@ interface DashboardProfileProps {
   avatarPricesByLevel: Record<number, string>;
   pollsAnswered: number;
   xp?: number;
+  xpLevel?: number;
   onLogout: () => void;
 }
 
@@ -57,6 +58,7 @@ export function DashboardProfile({
   avatarPricesByLevel,
   pollsAnswered,
   xp = 0,
+  xpLevel = 1,
   onLogout,
 }: DashboardProfileProps) {
   const { toast } = useToast();
@@ -106,7 +108,6 @@ export function DashboardProfile({
 
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);
-  const { current: xpCurrent, needed: xpNeeded, pct: xpPct } = xpProgressInLevel(xp, avatarLevel);
 
   return (
     <div className="space-y-5">
@@ -129,23 +130,7 @@ export function DashboardProfile({
         <p className="text-xs text-raw-gold/60">Level {displayIndex}</p>
         <p className="text-[10px] text-raw-silver/30">{theme.name}</p>
 
-        {/* XP Progress */}
-        <div className="mt-4 w-full">
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-[10px] text-raw-silver/30">
-              {avatarLevel < MAX_LEVEL ? `XP to Level ${avatarLevel + 1}` : "Max Level"}
-            </span>
-            <span className="text-[10px] text-raw-gold/60">
-              {xpCurrent.toLocaleString()} {xpNeeded > 0 ? `/ ${xpNeeded.toLocaleString()}` : ""}
-            </span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-raw-border/30">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-raw-gold/60 to-raw-gold transition-all duration-500"
-              style={{ width: `${xpPct}%` }}
-            />
-          </div>
-        </div>
+        <LevelProgressBanner xp={xp} level={xpLevel} className="mt-4 w-full" />
 
         {/* Level selector */}
         <div

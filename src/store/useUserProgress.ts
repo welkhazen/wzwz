@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { loadUserProgress, awardXP, type UserProgress } from "@/lib/userProgress";
+import { loadUserProgress, awardXP, awardXPOnce, type UserProgress } from "@/lib/userProgress";
 
 interface UseUserProgressReturn {
   progress: UserProgress | null;
@@ -7,6 +7,7 @@ interface UseUserProgressReturn {
   leveledUpTo: number | null;
   clearLevelUp: () => void;
   award: (amount: number) => Promise<void>;
+  awardOnce: (source: string, claimKey: string, amount: number) => Promise<boolean>;
 }
 
 export function useUserProgress(userId: string | undefined): UseUserProgressReturn {
@@ -35,7 +36,19 @@ export function useUserProgress(userId: string | undefined): UseUserProgressRetu
     if (result.leveledUp) setLeveledUpTo(result.level);
   }, [userId]);
 
+  const awardOnce = useCallback(async (source: string, claimKey: string, amount: number) => {
+    if (!userId) return false;
+    const result = await awardXPOnce(userId, source, claimKey, amount);
+    if (!result) return false;
+    setProgress((prev) => prev
+      ? { ...prev, xp: result.xp, level: result.level }
+      : { xp: result.xp, level: result.level, totalPollsAnswered: 0, streakDays: 0 }
+    );
+    if (result.leveledUp) setLeveledUpTo(result.level);
+    return Boolean(result.awarded);
+  }, [userId]);
+
   const clearLevelUp = useCallback(() => setLeveledUpTo(null), []);
 
-  return { progress, isLoading, leveledUpTo, clearLevelUp, award };
+  return { progress, isLoading, leveledUpTo, clearLevelUp, award, awardOnce };
 }

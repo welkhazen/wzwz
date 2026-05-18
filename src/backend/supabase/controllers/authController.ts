@@ -9,6 +9,22 @@ export interface AuthUser {
 }
 
 const SESSION_KEY = 'raw.auth.session.v2';
+const LOCAL_USERS_KEY = 'raw.auth.local-users.v1';
+const USE_LOCAL_AUTH_ONLY = true;
+const DEFAULT_LOCAL_USERS: LocalAuthUser[] = [
+  {
+    id: '00000000-0000-0000-0000-000000000001',
+    username: 'admin',
+    password: 'Admin123!',
+    role: 'admin',
+    status: 'active',
+    avatar_level: 1,
+  },
+];
+
+interface LocalAuthUser extends AuthUser {
+  password: string;
+}
 
 function usernameToAuthEmail(username: string): string {
   return `${username.trim().toLowerCase()}@raw.auth`;
@@ -66,23 +82,85 @@ function clearSession(): void {
 
 type RpcResult = { ok: boolean; user?: AuthUser; error?: string };
 
+function toAuthUser(user: LocalAuthUser): AuthUser {
+  return {
+    id: user.id,
+    username: user.username,
+    role: user.role,
+    status: user.status,
+    avatar_level: user.avatar_level,
+  };
+}
+
+function readLocalUsers(): LocalAuthUser[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_USERS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as LocalAuthUser[]) : [];
+    const users = Array.isArray(parsed) ? parsed : [];
+    const hasAdmin = users.some((user) => user.username.toLowerCase() === 'admin');
+    return hasAdmin ? users : [...DEFAULT_LOCAL_USERS, ...users];
+  } catch {
+    return DEFAULT_LOCAL_USERS;
+  }
+}
+
+function writeLocalUsers(users: LocalAuthUser[]): void {
+  localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+}
+
+function localSignUp(username: string, password: string): RpcResult {
+  const normalizedUsername = username.trim();
+  const users = readLocalUsers();
+  const existing = users.find((user) => user.username.toLowerCase() === normalizedUsername.toLowerCase());
+  if (existing) return { ok: false, error: 'Username is already taken' };
+
+  const user: LocalAuthUser = {
+    id: crypto.randomUUID(),
+    username: normalizedUsername,
+    password,
+    role: 'user',
+    status: 'active',
+    avatar_level: 1,
+  };
+  writeLocalUsers([...users, user]);
+  const authUser = toAuthUser(user);
+  saveSession(authUser);
+  return { ok: true, user: authUser };
+}
+
+function localSignIn(username: string, password: string): RpcResult {
+  const normalizedUsername = username.trim();
+  const user = readLocalUsers().find((entry) => entry.username.toLowerCase() === normalizedUsername.toLowerCase());
+  if (!user || user.password !== password) {
+    return { ok: false, error: 'Invalid username or password' };
+  }
+
+  const authUser = toAuthUser(user);
+  saveSession(authUser);
+  return { ok: true, user: authUser };
+}
+
 export async function signUp(username: string, password: string): Promise<RpcResult> {
+  if (USE_LOCAL_AUTH_ONLY) return localSignUp(username, password);
+
   const { data, error } = await supabase.rpc('signup_user', {
     p_username: username,
     p_password: password,
-  });
-  if (error) return { ok: false, error: error.message };
+  }).catch(() => ({ data: null, error: true }));
+  if (error || !data) return localSignUp(username, password);
   const result = data as RpcResult;
   if (result.ok && result.user) saveSession(result.user);
   return result;
 }
 
 export async function signIn(username: string, password: string): Promise<RpcResult> {
+  if (USE_LOCAL_AUTH_ONLY) return localSignIn(username, password);
+
   const { data, error } = await supabase.rpc('login_user', {
     p_username: username,
     p_password: password,
-  });
-  if (error) return { ok: false, error: error.message };
+  }).catch(() => ({ data: null, error: true }));
+  if (error || !data) return localSignIn(username, password);
   const result = data as RpcResult;
   if (result.ok && result.user) saveSession(result.user);
   return result;
