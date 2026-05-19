@@ -946,19 +946,6 @@ html.theme-light .landing-page-shell footer {
   --raw-gold-soft: rgba(241, 196, 45, 0.42);
   --raw-gold-strong: rgba(241, 196, 45, 0.82);
 
-  --raw-bg: #080808;
-  --raw-button-surface: rgba(18, 18, 18, 0.86);
-  --raw-button-surface-2: rgba(35, 38, 42, 0.82);
-  --raw-button-text: rgba(235, 235, 235, 0.82);
-  --raw-button-muted: rgba(217, 217, 217, 0.38);
-  --raw-chrome-1: rgba(217, 217, 217, 0.58);
-  --raw-chrome-2: rgba(255, 255, 255, 0.18);
-  --raw-chrome-3: rgba(0, 0, 0, 0.82);
-  --raw-inner-shadow: rgba(255, 255, 255, 0.08);
-  --raw-outer-shadow: rgba(0, 0, 0, 0.9);
-}
-
-html.theme-light {
   --raw-bg: #f5f5f2;
   --raw-button-surface: rgba(232, 232, 226, 0.72);
   --raw-button-surface-2: rgba(255, 255, 255, 0.88);
@@ -969,6 +956,20 @@ html.theme-light {
   --raw-chrome-3: rgba(255, 255, 255, 0.38);
   --raw-inner-shadow: rgba(95, 101, 111, 0.18);
   --raw-outer-shadow: rgba(20, 20, 20, 0.12);
+}
+
+.dark,
+[data-theme="dark"] {
+  --raw-bg: #080808;
+  --raw-button-surface: rgba(18, 18, 18, 0.86);
+  --raw-button-surface-2: rgba(35, 38, 42, 0.82);
+  --raw-button-text: rgba(235, 235, 235, 0.82);
+  --raw-button-muted: rgba(217, 217, 217, 0.38);
+  --raw-chrome-1: rgba(217, 217, 217, 0.58);
+  --raw-chrome-2: rgba(255, 255, 255, 0.18);
+  --raw-chrome-3: rgba(0, 0, 0, 0.82);
+  --raw-inner-shadow: rgba(255, 255, 255, 0.08);
+  --raw-outer-shadow: rgba(0, 0, 0, 0.9);
 }
 
 .raw-reveal-button {
