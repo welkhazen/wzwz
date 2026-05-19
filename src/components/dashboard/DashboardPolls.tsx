@@ -186,11 +186,12 @@ export function DashboardPolls({
   );
 
   // Once the daily limit is hit, show today's answered polls (capped at dailyPollLimit).
-  // While still under the limit, show unseen polls (or answered ones if nothing left to answer).
+  // While still under the limit, show unseen polls capped at the daily limit so the gate
+  // triggers after the batch — not after all 100+ polls.
   const displayPolls = isDailyPollLimitReached && answeredPolls.length > 0
     ? answeredPolls.slice(0, dailyPollLimit)
     : unseenPolls.length > 0
-      ? unseenPolls
+      ? unseenPolls.slice(0, dailyPollLimit)
       : answeredPolls.length > 0
         ? answeredPolls
         : polls;
